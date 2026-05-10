@@ -20,7 +20,8 @@ export const api = axios.create({
   baseURL:
     'http://localhost:3000/api/v1',
 
-  timeout: 15000,
+  // 🚀 AUMENTADO
+  timeout: 60000,
 });
 
 // =====================================
@@ -34,16 +35,19 @@ api.interceptors.request.use(
     const token =
       getAccessToken();
 
-    // 🔥 AUTH HEADER
     if (token) {
 
       config.headers.Authorization =
         `Bearer ${token}`;
     }
 
-    // 🔥 JSON HEADER
     config.headers['Content-Type'] =
       'application/json';
+
+    console.log(
+      '🚀 REQUEST:',
+      config.url
+    );
 
     return config;
   },
@@ -65,7 +69,15 @@ api.interceptors.request.use(
 
 api.interceptors.response.use(
 
-  (response) => response,
+  (response) => {
+
+    console.log(
+      '✅ RESPONSE:',
+      response.config.url
+    );
+
+    return response;
+  },
 
   async (error) => {
 
@@ -73,7 +85,7 @@ api.interceptors.response.use(
       error.config;
 
     // =====================================
-    // 🔥 TOKEN EXPIRED
+    // TOKEN EXPIRED
     // =====================================
 
     if (
@@ -88,7 +100,6 @@ api.interceptors.response.use(
         const refresh =
           getRefreshToken();
 
-        // 🔥 sem refresh token
         if (!refresh) {
 
           throw new Error(
@@ -99,17 +110,14 @@ api.interceptors.response.use(
         const response =
           await refreshToken(refresh);
 
-        // 🔥 salva novos tokens
         saveTokens(
           response.accessToken,
           response.refreshToken
         );
 
-        // 🔥 atualiza header
         originalRequest.headers.Authorization =
           `Bearer ${response.accessToken}`;
 
-        // 🔥 retry request
         return api(originalRequest);
 
       } catch (refreshError) {
@@ -127,7 +135,7 @@ api.interceptors.response.use(
     }
 
     // =====================================
-    // 🔥 NETWORK ERROR
+    // TIMEOUT
     // =====================================
 
     if (
@@ -140,7 +148,7 @@ api.interceptors.response.use(
     }
 
     // =====================================
-    // 🔥 SERVER ERROR
+    // SERVER
     // =====================================
 
     if (

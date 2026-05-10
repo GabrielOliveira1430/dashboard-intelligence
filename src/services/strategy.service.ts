@@ -13,6 +13,18 @@ export type Strategy = {
 };
 
 // =====================================
+// CACHE
+// =====================================
+
+let cachedStrategies:
+  Strategy[] | null = null;
+
+let lastFetch = 0;
+
+const CACHE_TIME =
+  5000;
+
+// =====================================
 // GET STRATEGIES
 // =====================================
 
@@ -20,6 +32,33 @@ export async function getStrategies():
 Promise<Strategy[]> {
 
   try {
+
+    // =====================================
+    // CACHE
+    // =====================================
+
+    const now =
+      Date.now();
+
+    if (
+
+      cachedStrategies &&
+
+      now - lastFetch <
+      CACHE_TIME
+
+    ) {
+
+      console.log(
+        '⚡ USING CACHE'
+      );
+
+      return cachedStrategies;
+    }
+
+    console.log(
+      '🚀 CALLING ORCHESTRATOR'
+    );
 
     const response =
       await api.post(
@@ -38,24 +77,53 @@ Promise<Strategy[]> {
       );
 
     console.log(
-      '🔥 ORCHESTRATOR RAW:',
-      response.data
+      '🔥 FULL RESPONSE:',
+      response
+    );
+
+    const raw =
+      response.data;
+
+    console.log(
+      '🔥 RESPONSE DATA:',
+      raw
     );
 
     const data =
-      response.data?.data ||
-      response.data?.result ||
-      response.data;
+
+      raw?.data ||
+
+      raw?.result ||
+
+      raw;
+
+    console.log(
+      '🧠 EXTRACTED DATA:',
+      data
+    );
 
     const strategies =
+
       data?.decision?.ranking ||
+
       data?.strategies ||
+
       [];
 
     console.log(
-      '🧠 STRATEGIES:',
+      '✅ FINAL STRATEGIES:',
       strategies
     );
+
+    // =====================================
+    // SAVE CACHE
+    // =====================================
+
+    cachedStrategies =
+      strategies;
+
+    lastFetch =
+      now;
 
     return strategies;
 

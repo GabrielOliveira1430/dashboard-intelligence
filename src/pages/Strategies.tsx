@@ -4,6 +4,8 @@ import MainLayout from '../components/layout/MainLayout';
 
 import StrategyChart from '../components/charts/StrategyChart';
 
+import LiveMetricCard from '../components/cards/LiveMetricCard';
+
 import {
   getStrategies
 } from '../services/strategy.service';
@@ -24,18 +26,40 @@ export default function Strategies() {
   const [loading, setLoading] =
     useState(true);
 
+  const [refreshing, setRefreshing] =
+    useState(false);
+
+  const [lastUpdate, setLastUpdate] =
+    useState('');
+
+
   // =====================================
-  // LOAD STRATEGIES
+  // LOAD
   // =====================================
 
-  async function loadStrategies() {
+  async function loadStrategies(
+    showLoading = false
+  ) {
 
     try {
+
+      if (showLoading) {
+
+        setLoading(true);
+
+      } else {
+
+        setRefreshing(true);
+      }
 
       const data =
         await getStrategies();
 
       setStrategies(data);
+
+      setLastUpdate(
+        new Date().toLocaleTimeString()
+      );
 
     } catch (error) {
 
@@ -47,6 +71,8 @@ export default function Strategies() {
     } finally {
 
       setLoading(false);
+
+      setRefreshing(false);
     }
   }
 
@@ -56,7 +82,7 @@ export default function Strategies() {
 
   useEffect(() => {
 
-    loadStrategies();
+    loadStrategies(true);
 
     const interval =
       setInterval(() => {
@@ -87,6 +113,47 @@ export default function Strategies() {
     }));
 
   }, [strategies]);
+
+  // =====================================
+  // BEST STRATEGY
+  // =====================================
+
+  const bestStrategy =
+    strategies[0];
+
+  // =====================================
+  // GLOBAL STATS
+  // =====================================
+
+  const avgAccuracy = strategies.length
+    ? Math.round(
+        strategies.reduce(
+          (acc, item) =>
+            acc + item.accuracy,
+          0
+        ) / strategies.length
+      )
+    : 0;
+
+  const avgCoverage = strategies.length
+    ? Math.round(
+        strategies.reduce(
+          (acc, item) =>
+            acc + item.coverage,
+          0
+        ) / strategies.length
+      )
+    : 0;
+
+  const avgDiversity = strategies.length
+    ? Math.round(
+        strategies.reduce(
+          (acc, item) =>
+            acc + item.diversity,
+          0
+        ) / strategies.length
+      )
+    : 0;
 
   // =====================================
   // LOADING
@@ -120,7 +187,7 @@ export default function Strategies() {
             " />
 
             <p className="text-slate-400 text-lg">
-              Carregando estratégias...
+              Inicializando inteligência...
             </p>
 
           </div>
@@ -137,49 +204,280 @@ export default function Strategies() {
 
       {/* HEADER */}
 
-      <div className="mb-10">
+      <div className="
+        flex
+        flex-col
+        xl:flex-row
+        xl:items-center
+        xl:justify-between
+        gap-6
+        mb-10
+      ">
 
-        <div className="
-          inline-flex
-          items-center
-          gap-2
-          bg-cyan-500/10
-          border
-          border-cyan-500/20
-          text-cyan-400
-          px-4
-          py-2
-          rounded-2xl
-          font-bold
-          mb-6
-        ">
+        <div>
 
-          🧠 AI STRATEGIES
+          <div className="
+            flex
+            items-center
+            gap-3
+            mb-5
+          ">
+
+            <div className="
+              px-4
+              py-2
+              rounded-2xl
+              bg-cyan-500/10
+              border
+              border-cyan-500/20
+              text-cyan-400
+              text-sm
+              font-black
+            ">
+              🧠 AI STRATEGY LAB
+            </div>
+
+            {
+              refreshing && (
+
+                <div className="
+                  flex
+                  items-center
+                  gap-2
+                  text-yellow-400
+                  text-sm
+                  font-bold
+                ">
+
+                  <div className="
+                    w-2
+                    h-2
+                    rounded-full
+                    bg-yellow-400
+                    animate-pulse
+                  " />
+
+                  Atualizando...
+
+                </div>
+              )
+            }
+
+          </div>
+
+          <h1 className="
+            text-5xl
+            font-black
+            tracking-tight
+            mb-3
+          ">
+            Strategy Intelligence
+          </h1>
+
+          <p className="text-slate-400 text-lg">
+            Última atualização às {lastUpdate}
+          </p>
 
         </div>
 
-        <h1 className="
-          text-5xl
-          font-black
-          tracking-tight
-          mb-3
-        ">
-          Strategies
-        </h1>
-
-        <p className="text-slate-400 text-lg">
-          Estratégias inteligentes em tempo real
-        </p>
+        <button
+          onClick={() => loadStrategies()}
+          className="
+            px-6
+            py-4
+            rounded-2xl
+            bg-cyan-500
+            hover:bg-cyan-400
+            text-black
+            font-black
+            transition-all
+          "
+        >
+          Atualizar
+        </button>
 
       </div>
 
-      {/* CHART */}
+      {/* METRICS */}
 
       <div className="
-        w-full
-        min-w-0
+        grid
+        grid-cols-1
+        sm:grid-cols-2
+        xl:grid-cols-4
+        gap-6
         mb-10
       ">
+
+        <LiveMetricCard
+          title="Strategies"
+          value={strategies.length}
+          icon="🧠"
+        />
+
+        <LiveMetricCard
+          title="Avg Accuracy"
+          value={`${avgAccuracy}%`}
+          icon="🎯"
+          color="emerald"
+        />
+
+        <LiveMetricCard
+          title="Coverage"
+          value={`${avgCoverage}%`}
+          icon="🌐"
+          color="violet"
+        />
+
+        <LiveMetricCard
+          title="Diversity"
+          value={`${avgDiversity}%`}
+          icon="⚡"
+          color="orange"
+        />
+
+      </div>
+
+      {/* TOP STRATEGY */}
+
+      {
+        bestStrategy && (
+
+          <div className="
+            relative
+            overflow-hidden
+            rounded-3xl
+            border
+            border-cyan-500/20
+            bg-gradient-to-br
+            from-cyan-500/10
+            to-blue-500/5
+            backdrop-blur-xl
+            p-8
+            mb-10
+          ">
+
+            <div className="
+              absolute
+              top-0
+              right-0
+              w-72
+              h-72
+              bg-cyan-500/10
+              blur-3xl
+            " />
+
+            <div className="relative z-10">
+
+              <div className="
+                inline-flex
+                items-center
+                gap-2
+                px-4
+                py-2
+                rounded-2xl
+                bg-cyan-500/10
+                border
+                border-cyan-500/20
+                text-cyan-400
+                font-bold
+                mb-6
+              ">
+
+                👑 TOP STRATEGY
+
+              </div>
+
+              <h2 className="
+                text-5xl
+                font-black
+                mb-6
+              ">
+                {bestStrategy.strategy}
+              </h2>
+
+              <div className="
+                grid
+                grid-cols-2
+                md:grid-cols-4
+                gap-6
+              ">
+
+                <div>
+
+                  <p className="text-slate-400 mb-2">
+                    Accuracy
+                  </p>
+
+                  <h3 className="
+                    text-4xl
+                    font-black
+                    text-cyan-400
+                  ">
+                    {bestStrategy.accuracy}%
+                  </h3>
+
+                </div>
+
+                <div>
+
+                  <p className="text-slate-400 mb-2">
+                    Coverage
+                  </p>
+
+                  <h3 className="
+                    text-4xl
+                    font-black
+                    text-green-400
+                  ">
+                    {bestStrategy.coverage}%
+                  </h3>
+
+                </div>
+
+                <div>
+
+                  <p className="text-slate-400 mb-2">
+                    Diversity
+                  </p>
+
+                  <h3 className="
+                    text-4xl
+                    font-black
+                    text-purple-400
+                  ">
+                    {bestStrategy.diversity}%
+                  </h3>
+
+                </div>
+
+                <div>
+
+                  <p className="text-slate-400 mb-2">
+                    Score
+                  </p>
+
+                  <h3 className="
+                    text-4xl
+                    font-black
+                    text-yellow-400
+                  ">
+                    {bestStrategy.score}
+                  </h3>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        )
+      }
+
+      {/* CHART */}
+
+      <div className="mb-10">
 
         <StrategyChart
           data={chartData}
@@ -187,53 +485,17 @@ export default function Strategies() {
 
       </div>
 
-      {/* EMPTY */}
-
-      {
-        strategies.length === 0 && (
-
-          <div className="
-            rounded-3xl
-            border
-            border-white/10
-            bg-white/[0.04]
-            backdrop-blur-xl
-            p-12
-            text-center
-          ">
-
-            <div className="text-6xl mb-6">
-              ⚠️
-            </div>
-
-            <h2 className="
-              text-3xl
-              font-black
-              mb-4
-            ">
-              Nenhuma estratégia encontrada
-            </h2>
-
-            <p className="text-slate-400">
-              Sua API não retornou strategies.
-            </p>
-
-          </div>
-        )
-      }
-
-      {/* GRID */}
+      {/* STRATEGY GRID */}
 
       <div className="
         grid
         grid-cols-1
-        lg:grid-cols-2
+        xl:grid-cols-2
         gap-8
-        min-w-0
       ">
 
         {
-          strategies.map((item) => (
+          strategies.map((item, index) => (
 
             <div
               key={item.strategy}
@@ -246,8 +508,6 @@ export default function Strategies() {
                 bg-white/[0.04]
                 backdrop-blur-xl
                 p-8
-                shadow-2xl
-                min-w-0
               "
             >
 
@@ -263,20 +523,72 @@ export default function Strategies() {
 
               <div className="relative z-10">
 
-                <div className="text-5xl mb-6">
-                  🎯
+                <div className="
+                  flex
+                  items-center
+                  justify-between
+                  mb-6
+                ">
+
+                  <div className="
+                    flex
+                    items-center
+                    gap-4
+                  ">
+
+                    <div className="
+                      w-16
+                      h-16
+                      rounded-2xl
+                      bg-cyan-500/10
+                      border
+                      border-cyan-500/20
+                      flex
+                      items-center
+                      justify-center
+                      text-3xl
+                    ">
+                      🎯
+                    </div>
+
+                    <div>
+
+                      <p className="
+                        text-slate-500
+                        text-sm
+                      ">
+                        Rank #{index + 1}
+                      </p>
+
+                      <h2 className="
+                        text-2xl
+                        font-black
+                      ">
+                        {item.strategy}
+                      </h2>
+
+                    </div>
+
+                  </div>
+
+                  <div className="
+                    px-4
+                    py-2
+                    rounded-2xl
+                    bg-cyan-500/10
+                    border
+                    border-cyan-500/20
+                    text-cyan-400
+                    font-black
+                  ">
+                    {item.score}
+                  </div>
+
                 </div>
 
-                <h2 className="
-                  text-3xl
-                  font-black
-                  mb-6
-                  break-words
-                ">
-                  {item.strategy}
-                </h2>
-
                 <div className="space-y-5">
+
+                  {/* ACCURACY */}
 
                   <div>
 
@@ -322,56 +634,93 @@ export default function Strategies() {
 
                   </div>
 
-                  <div className="
-                    grid
-                    grid-cols-3
-                    gap-4
-                    pt-4
-                  ">
+                  {/* COVERAGE */}
 
-                    <div>
+                  <div>
 
-                      <p className="text-slate-500 text-sm">
+                    <div className="
+                      flex
+                      items-center
+                      justify-between
+                      mb-2
+                    ">
+
+                      <span className="text-slate-400">
                         Coverage
-                      </p>
+                      </span>
 
-                      <h3 className="
-                        text-xl
+                      <span className="
+                        text-green-400
                         font-black
                       ">
                         {item.coverage}%
-                      </h3>
+                      </span>
 
                     </div>
 
-                    <div>
+                    <div className="
+                      h-3
+                      rounded-full
+                      bg-slate-800
+                      overflow-hidden
+                    ">
 
-                      <p className="text-slate-500 text-sm">
+                      <div
+                        className="
+                          h-full
+                          rounded-full
+                          bg-green-400
+                        "
+                        style={{
+                          width: `${item.coverage}%`
+                        }}
+                      />
+
+                    </div>
+
+                  </div>
+
+                  {/* DIVERSITY */}
+
+                  <div>
+
+                    <div className="
+                      flex
+                      items-center
+                      justify-between
+                      mb-2
+                    ">
+
+                      <span className="text-slate-400">
                         Diversity
-                      </p>
+                      </span>
 
-                      <h3 className="
-                        text-xl
+                      <span className="
+                        text-purple-400
                         font-black
                       ">
                         {item.diversity}%
-                      </h3>
+                      </span>
 
                     </div>
 
-                    <div>
+                    <div className="
+                      h-3
+                      rounded-full
+                      bg-slate-800
+                      overflow-hidden
+                    ">
 
-                      <p className="text-slate-500 text-sm">
-                        Score
-                      </p>
-
-                      <h3 className="
-                        text-xl
-                        font-black
-                        text-green-400
-                      ">
-                        {item.score}
-                      </h3>
+                      <div
+                        className="
+                          h-full
+                          rounded-full
+                          bg-purple-400
+                        "
+                        style={{
+                          width: `${item.diversity}%`
+                        }}
+                      />
 
                     </div>
 
