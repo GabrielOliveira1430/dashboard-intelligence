@@ -1,13 +1,15 @@
+
+// src/services/orchestrator.service.ts
+
 import { api } from '../api/client';
 
-// =====================================
-// TYPES
-// =====================================
+import type {
+  OrchestratorResponse
+} from '../types/orchestrator.types';
 
-type OrchestratorResponse = any;
 
 // =====================================
-// SERVICE
+// 🚀 SERVICE
 // =====================================
 
 export async function getOrchestrator():
@@ -31,16 +33,33 @@ Promise<OrchestratorResponse> {
         }
       );
 
-    // 🔥 suporta múltiplos formatos
-    const data =
-      response.data.data ||
-      response.data.result ||
+
+    // =====================================
+    // 🔥 FLEXIBLE RESPONSE
+    // =====================================
+
+    const data: OrchestratorResponse =
+
+      response.data?.data ||
+
+      response.data?.result ||
+
       response.data;
+
+
+    // =====================================
+    // 🧠 DEBUG
+    // =====================================
 
     console.log(
       '🔥 ORCHESTRATOR SUCCESS:',
       data
     );
+
+
+    // =====================================
+    // 🚀 RETURN
+    // =====================================
 
     return data;
 
@@ -51,9 +70,13 @@ Promise<OrchestratorResponse> {
       error
     );
 
+
     throw new Error(
+
       error?.response?.data?.message ||
+
       'Erro ao carregar orchestrator'
     );
   }
 }
+
