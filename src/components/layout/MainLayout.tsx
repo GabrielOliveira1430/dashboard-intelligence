@@ -71,6 +71,12 @@ export default function MainLayout({
       path: '/simulator',
       label: 'Simulator',
       icon: '🎯'
+    },
+
+    {
+      path: '/football',
+      label: 'Football AI',
+      icon: '⚽'
     }
   ];
 
@@ -414,6 +420,54 @@ export default function MainLayout({
             leading-relaxed
           ">
             Sistema evolutivo ativo e monitorando estratégias em tempo real.
+          </p>
+
+        </div>
+
+        {/* FOOTBALL STATUS */}
+
+        <div className="
+          mt-5
+          rounded-3xl
+          border
+          border-cyan-500/20
+          bg-cyan-500/10
+          p-5
+        ">
+
+          <div className="
+            flex
+            items-center
+            gap-3
+            mb-3
+          ">
+
+            <div className="
+              w-3
+              h-3
+              rounded-full
+              bg-cyan-400
+              animate-pulse
+            " />
+
+            <p className="
+              text-sm
+              font-black
+              text-cyan-400
+              uppercase
+              tracking-wider
+            ">
+              FOOTBALL AI
+            </p>
+
+          </div>
+
+          <p className="
+            text-sm
+            text-slate-300
+            leading-relaxed
+          ">
+            Predições esportivas em tempo real com análise inteligente.
           </p>
 
         </div>

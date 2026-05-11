@@ -32,18 +32,23 @@ export default function Strategies() {
   const [lastUpdate, setLastUpdate] =
     useState('');
 
+  const [error, setError] =
+    useState('');
+
 
   // =====================================
   // LOAD
   // =====================================
 
   async function loadStrategies(
-    showLoading = false
+    firstLoad = false
   ) {
 
     try {
 
-      if (showLoading) {
+      setError('');
+
+      if (firstLoad) {
 
         setLoading(true);
 
@@ -55,17 +60,27 @@ export default function Strategies() {
       const data =
         await getStrategies();
 
-      setStrategies(data);
+      const sorted =
+        [...data].sort(
+          (a, b) =>
+            b.score - a.score
+        );
+
+      setStrategies(sorted);
 
       setLastUpdate(
         new Date().toLocaleTimeString()
       );
 
-    } catch (error) {
+    } catch (err: any) {
 
       console.error(
-        'STRATEGIES PAGE ERROR:',
-        error
+        '❌ STRATEGIES ERROR:',
+        err
+      );
+
+      setError(
+        'Erro ao carregar estratégias'
       );
 
     } finally {
@@ -75,6 +90,7 @@ export default function Strategies() {
       setRefreshing(false);
     }
   }
+
 
   // =====================================
   // AUTO REFRESH
@@ -96,6 +112,7 @@ export default function Strategies() {
 
   }, []);
 
+
   // =====================================
   // CHART DATA
   // =====================================
@@ -108,52 +125,67 @@ export default function Strategies() {
         item.strategy,
 
       score:
-        item.accuracy
+        Number(item.score || 0)
 
     }));
 
   }, [strategies]);
+
 
   // =====================================
   // BEST STRATEGY
   // =====================================
 
   const bestStrategy =
-    strategies[0];
+    strategies?.[0];
+
 
   // =====================================
-  // GLOBAL STATS
+  // METRICS
   // =====================================
 
-  const avgAccuracy = strategies.length
-    ? Math.round(
-        strategies.reduce(
-          (acc, item) =>
-            acc + item.accuracy,
-          0
-        ) / strategies.length
-      )
-    : 0;
+  const avgAccuracy =
+    strategies.length > 0
 
-  const avgCoverage = strategies.length
-    ? Math.round(
-        strategies.reduce(
-          (acc, item) =>
-            acc + item.coverage,
-          0
-        ) / strategies.length
-      )
-    : 0;
+      ? Math.round(
 
-  const avgDiversity = strategies.length
-    ? Math.round(
-        strategies.reduce(
-          (acc, item) =>
-            acc + item.diversity,
-          0
-        ) / strategies.length
-      )
-    : 0;
+          strategies.reduce(
+            (acc, item) =>
+              acc + item.accuracy,
+            0
+          ) / strategies.length
+        )
+
+      : 0;
+
+  const avgCoverage =
+    strategies.length > 0
+
+      ? Math.round(
+
+          strategies.reduce(
+            (acc, item) =>
+              acc + item.coverage,
+            0
+          ) / strategies.length
+        )
+
+      : 0;
+
+  const avgDiversity =
+    strategies.length > 0
+
+      ? Math.round(
+
+          strategies.reduce(
+            (acc, item) =>
+              acc + item.diversity,
+            0
+          ) / strategies.length
+        )
+
+      : 0;
+
 
   // =====================================
   // LOADING
@@ -186,7 +218,10 @@ export default function Strategies() {
               mb-6
             " />
 
-            <p className="text-slate-400 text-lg">
+            <p className="
+              text-slate-400
+              text-lg
+            ">
               Inicializando inteligência...
             </p>
 
@@ -197,6 +232,55 @@ export default function Strategies() {
       </MainLayout>
     );
   }
+
+
+  // =====================================
+  // ERROR
+  // =====================================
+
+  if (error) {
+
+    return (
+
+      <MainLayout>
+
+        <div className="
+          flex
+          items-center
+          justify-center
+          h-[70vh]
+        ">
+
+          <div className="
+            text-center
+            rounded-3xl
+            border
+            border-red-500/20
+            bg-red-500/10
+            p-10
+          ">
+
+            <h2 className="
+              text-3xl
+              font-black
+              text-red-400
+              mb-4
+            ">
+              ❌ Erro
+            </h2>
+
+            <p className="text-slate-300">
+              {error}
+            </p>
+
+          </div>
+
+        </div>
+
+      </MainLayout>
+    );
+  }
+
 
   return (
 
@@ -217,51 +301,29 @@ export default function Strategies() {
         <div>
 
           <div className="
-            flex
+            inline-flex
             items-center
-            gap-3
+            gap-2
+            rounded-2xl
+            bg-cyan-500/10
+            border
+            border-cyan-500/20
+            px-4
+            py-2
+            text-cyan-400
+            font-black
             mb-5
           ">
 
             <div className="
-              px-4
-              py-2
-              rounded-2xl
-              bg-cyan-500/10
-              border
-              border-cyan-500/20
-              text-cyan-400
-              text-sm
-              font-black
-            ">
-              🧠 AI STRATEGY LAB
-            </div>
+              w-2
+              h-2
+              rounded-full
+              bg-cyan-400
+              animate-pulse
+            " />
 
-            {
-              refreshing && (
-
-                <div className="
-                  flex
-                  items-center
-                  gap-2
-                  text-yellow-400
-                  text-sm
-                  font-bold
-                ">
-
-                  <div className="
-                    w-2
-                    h-2
-                    rounded-full
-                    bg-yellow-400
-                    animate-pulse
-                  " />
-
-                  Atualizando...
-
-                </div>
-              )
-            }
+            AI STRATEGY ENGINE
 
           </div>
 
@@ -274,29 +336,71 @@ export default function Strategies() {
             Strategy Intelligence
           </h1>
 
-          <p className="text-slate-400 text-lg">
+          <p className="
+            text-slate-400
+            text-lg
+          ">
             Última atualização às {lastUpdate}
           </p>
 
         </div>
 
-        <button
-          onClick={() => loadStrategies()}
-          className="
-            px-6
-            py-4
-            rounded-2xl
-            bg-cyan-500
-            hover:bg-cyan-400
-            text-black
-            font-black
-            transition-all
-          "
-        >
-          Atualizar
-        </button>
+        <div className="
+          flex
+          items-center
+          gap-4
+        ">
+
+          {
+            refreshing && (
+
+              <div className="
+                flex
+                items-center
+                gap-2
+                text-yellow-400
+                text-sm
+                font-bold
+              ">
+
+                <div className="
+                  w-2
+                  h-2
+                  rounded-full
+                  bg-yellow-400
+                  animate-pulse
+                " />
+
+                Atualizando...
+
+              </div>
+            )
+          }
+
+          <button
+            onClick={() =>
+              loadStrategies()
+            }
+            className="
+              px-6
+              py-4
+              rounded-2xl
+              bg-cyan-500
+              hover:bg-cyan-400
+              text-black
+              font-black
+              transition-all
+              duration-300
+              hover:scale-105
+            "
+          >
+            Atualizar
+          </button>
+
+        </div>
 
       </div>
+
 
       {/* METRICS */}
 
@@ -325,20 +429,21 @@ export default function Strategies() {
         <LiveMetricCard
           title="Coverage"
           value={`${avgCoverage}%`}
-          icon="🌐"
-          color="violet"
+          icon="📡"
+          color="cyan"
         />
 
         <LiveMetricCard
           title="Diversity"
           value={`${avgDiversity}%`}
-          icon="⚡"
-          color="orange"
+          icon="🧬"
+          color="violet"
         />
 
       </div>
 
-      {/* TOP STRATEGY */}
+
+      {/* BEST STRATEGY */}
 
       {
         bestStrategy && (
@@ -351,7 +456,7 @@ export default function Strategies() {
             border-cyan-500/20
             bg-gradient-to-br
             from-cyan-500/10
-            to-blue-500/5
+            to-blue-500/10
             backdrop-blur-xl
             p-8
             mb-10
@@ -380,12 +485,10 @@ export default function Strategies() {
                 border
                 border-cyan-500/20
                 text-cyan-400
-                font-bold
+                font-black
                 mb-6
               ">
-
                 👑 TOP STRATEGY
-
               </div>
 
               <h2 className="
@@ -405,7 +508,10 @@ export default function Strategies() {
 
                 <div>
 
-                  <p className="text-slate-400 mb-2">
+                  <p className="
+                    text-slate-400
+                    mb-2
+                  ">
                     Accuracy
                   </p>
 
@@ -421,14 +527,17 @@ export default function Strategies() {
 
                 <div>
 
-                  <p className="text-slate-400 mb-2">
+                  <p className="
+                    text-slate-400
+                    mb-2
+                  ">
                     Coverage
                   </p>
 
                   <h3 className="
                     text-4xl
                     font-black
-                    text-green-400
+                    text-emerald-400
                   ">
                     {bestStrategy.coverage}%
                   </h3>
@@ -437,14 +546,17 @@ export default function Strategies() {
 
                 <div>
 
-                  <p className="text-slate-400 mb-2">
+                  <p className="
+                    text-slate-400
+                    mb-2
+                  ">
                     Diversity
                   </p>
 
                   <h3 className="
                     text-4xl
                     font-black
-                    text-purple-400
+                    text-violet-400
                   ">
                     {bestStrategy.diversity}%
                   </h3>
@@ -453,14 +565,17 @@ export default function Strategies() {
 
                 <div>
 
-                  <p className="text-slate-400 mb-2">
+                  <p className="
+                    text-slate-400
+                    mb-2
+                  ">
                     Score
                   </p>
 
                   <h3 className="
                     text-4xl
                     font-black
-                    text-yellow-400
+                    text-orange-400
                   ">
                     {bestStrategy.score}
                   </h3>
@@ -475,6 +590,7 @@ export default function Strategies() {
         )
       }
 
+
       {/* CHART */}
 
       <div className="mb-10">
@@ -485,7 +601,40 @@ export default function Strategies() {
 
       </div>
 
-      {/* STRATEGY GRID */}
+
+      {/* EMPTY */}
+
+      {
+        strategies.length === 0 && (
+
+          <div className="
+            rounded-3xl
+            border
+            border-white/10
+            bg-white/[0.04]
+            backdrop-blur-xl
+            p-16
+            text-center
+          ">
+
+            <h2 className="
+              text-3xl
+              font-black
+              mb-4
+            ">
+              Nenhuma estratégia encontrada
+            </h2>
+
+            <p className="text-slate-400">
+              O orchestrator ainda não retornou estratégias.
+            </p>
+
+          </div>
+        )
+      }
+
+
+      {/* GRID */}
 
       <div className="
         grid
@@ -508,6 +657,10 @@ export default function Strategies() {
                 bg-white/[0.04]
                 backdrop-blur-xl
                 p-8
+                transition-all
+                duration-300
+                hover:border-cyan-500/20
+                hover:-translate-y-1
               "
             >
 
@@ -548,7 +701,17 @@ export default function Strategies() {
                       justify-center
                       text-3xl
                     ">
-                      🎯
+
+                      {
+                        index === 0
+                          ? '🥇'
+                          : index === 1
+                          ? '🥈'
+                          : index === 2
+                          ? '🥉'
+                          : '🎯'
+                      }
+
                     </div>
 
                     <div>
@@ -582,148 +745,6 @@ export default function Strategies() {
                     font-black
                   ">
                     {item.score}
-                  </div>
-
-                </div>
-
-                <div className="space-y-5">
-
-                  {/* ACCURACY */}
-
-                  <div>
-
-                    <div className="
-                      flex
-                      items-center
-                      justify-between
-                      mb-2
-                    ">
-
-                      <span className="text-slate-400">
-                        Accuracy
-                      </span>
-
-                      <span className="
-                        text-cyan-400
-                        font-black
-                      ">
-                        {item.accuracy}%
-                      </span>
-
-                    </div>
-
-                    <div className="
-                      h-3
-                      rounded-full
-                      bg-slate-800
-                      overflow-hidden
-                    ">
-
-                      <div
-                        className="
-                          h-full
-                          rounded-full
-                          bg-cyan-400
-                        "
-                        style={{
-                          width: `${item.accuracy}%`
-                        }}
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* COVERAGE */}
-
-                  <div>
-
-                    <div className="
-                      flex
-                      items-center
-                      justify-between
-                      mb-2
-                    ">
-
-                      <span className="text-slate-400">
-                        Coverage
-                      </span>
-
-                      <span className="
-                        text-green-400
-                        font-black
-                      ">
-                        {item.coverage}%
-                      </span>
-
-                    </div>
-
-                    <div className="
-                      h-3
-                      rounded-full
-                      bg-slate-800
-                      overflow-hidden
-                    ">
-
-                      <div
-                        className="
-                          h-full
-                          rounded-full
-                          bg-green-400
-                        "
-                        style={{
-                          width: `${item.coverage}%`
-                        }}
-                      />
-
-                    </div>
-
-                  </div>
-
-                  {/* DIVERSITY */}
-
-                  <div>
-
-                    <div className="
-                      flex
-                      items-center
-                      justify-between
-                      mb-2
-                    ">
-
-                      <span className="text-slate-400">
-                        Diversity
-                      </span>
-
-                      <span className="
-                        text-purple-400
-                        font-black
-                      ">
-                        {item.diversity}%
-                      </span>
-
-                    </div>
-
-                    <div className="
-                      h-3
-                      rounded-full
-                      bg-slate-800
-                      overflow-hidden
-                    ">
-
-                      <div
-                        className="
-                          h-full
-                          rounded-full
-                          bg-purple-400
-                        "
-                        style={{
-                          width: `${item.diversity}%`
-                        }}
-                      />
-
-                    </div>
-
                   </div>
 
                 </div>

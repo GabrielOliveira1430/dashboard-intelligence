@@ -11,6 +11,7 @@ import Dashboard from './pages/Dashboard';
 import Analytics from './pages/Analytics';
 import Strategies from './pages/Strategies';
 import Simulator from './pages/Simulator';
+import Football from './pages/Football';
 import Login from './pages/Login';
 
 export default function App() {
@@ -75,6 +76,17 @@ export default function App() {
             element={
               <PrivateRoute>
                 <Simulator />
+              </PrivateRoute>
+            }
+          />
+
+          {/* FOOTBALL */}
+
+          <Route
+            path="/football"
+            element={
+              <PrivateRoute>
+                <Football />
               </PrivateRoute>
             }
           />
