@@ -2,26 +2,60 @@ import {
   env
 } from '../config/env';
 
-type WSCallback =
-  (data: any) => void;
+import {
+  getAccessToken
+} from '../auth/auth.storage';
+
+import {
+  useWSConnectionStore
+} from '../store/ws.connection.store';
+
+import {
+  wsEmitter
+} from './ws.emitter';
+
+import {
+  WS_EVENTS,
+  isWSMessage
+} from './ws.events';
+
+import type {
+  WSEventsMap
+} from './ws.types.events';
+
+import {
+  WSHeartbeat
+} from '../realtime/ws.heartbeat';
+
+import {
+  WSReconnect
+} from '../realtime/ws.reconnect';
+
+import {
+  WS_CONFIG
+} from '../realtime/ws.constants';
+
+// ==========================================
+// 🚀 WS CLIENT
+// ==========================================
 
 class WSClient {
 
-  private ws: WebSocket | null = null;
+  private ws:
+    WebSocket | null = null;
 
-  private reconnectAttempts = 0;
-
-  private isConnecting = false;
+  private connecting = false;
 
   private manualClose = false;
 
-  private heartbeatInterval:
-    number | null = null;
+  private heartbeat =
+    new WSHeartbeat();
 
-  private listeners = new Map<
-    string,
-    Set<WSCallback>
-  >();
+  private reconnect =
+    new WSReconnect();
+
+  private connectionStore =
+    useWSConnectionStore.getState();
 
   // ==========================================
   // 🚀 CONNECT
@@ -29,35 +63,27 @@ class WSClient {
 
   connect() {
 
-    // ==========================================
-    // 🛡️ SAFE CONNECT
-    // ==========================================
+    if (
+      this.connecting
+    ) {
+      return;
+    }
 
     if (
       this.ws &&
       (
-        this.ws.readyState === WebSocket.OPEN ||
-        this.ws.readyState === WebSocket.CONNECTING
+        this.ws.readyState ===
+          WebSocket.OPEN ||
+
+        this.ws.readyState ===
+          WebSocket.CONNECTING
       )
     ) {
       return;
     }
 
-    if (this.isConnecting) {
-      return;
-    }
-
-    this.manualClose = false;
-
-    this.isConnecting = true;
-
-    // ==========================================
-    // 🔐 TOKEN
-    // ==========================================
-
     const token =
-      localStorage.getItem('access_token') ||
-      localStorage.getItem('accessToken');
+      getAccessToken();
 
     if (!token) {
 
@@ -65,14 +91,12 @@ class WSClient {
         '⚠️ WS sem token'
       );
 
-      this.isConnecting = false;
-
       return;
     }
 
-    // ==========================================
-    // 🌐 URL
-    // ==========================================
+    this.connecting = true;
+
+    this.manualClose = false;
 
     const url =
       `${env.api.ws}?token=${token}`;
@@ -95,11 +119,50 @@ class WSClient {
         '🟢 WS CONNECTED'
       );
 
-      this.reconnectAttempts = 0;
+      this.connecting = false;
 
-      this.isConnecting = false;
+      this.reconnect.reset();
 
-      this.startHeartbeat();
+      // ==========================================
+      // 🧠 STORE
+      // ==========================================
+
+      this.connectionStore
+        .setConnected(true);
+
+      this.connectionStore
+        .setReconnecting(false);
+
+      this.connectionStore
+        .setReconnectAttempts(0);
+
+      wsEmitter.emit(
+        'connected'
+      );
+
+      // ==========================================
+      // ❤️ HEARTBEAT
+      // ==========================================
+
+      this.heartbeat.start(
+
+        () => {
+
+          this.send(
+            'ping',
+            {
+              timestamp:
+                Date.now()
+            }
+          );
+
+          this.connectionStore
+            .updateHeartbeat();
+
+        },
+
+        WS_CONFIG.heartbeatInterval
+      );
     };
 
     // ==========================================
@@ -112,51 +175,35 @@ class WSClient {
 
       try {
 
-        const msg =
-          JSON.parse(event.data);
+        const parsed =
+          JSON.parse(
+            event.data
+          );
 
-        const type =
-          msg?.type;
-
-        const payload =
-          msg?.data ?? msg;
-
-        // ❤️ HEARTBEAT
-
-        if (type === 'pong') {
+        if (
+          !isWSMessage(parsed)
+        ) {
           return;
         }
 
-        if (!type) {
+        // ❤️ PONG
+
+        if (
+          parsed.type ===
+          WS_EVENTS.PONG
+        ) {
           return;
         }
 
-        const callbacks =
-          this.listeners.get(type);
-
-        if (!callbacks) {
-          return;
-        }
-
-        callbacks.forEach(cb => {
-
-          try {
-
-            cb(payload);
-
-          } catch (error) {
-
-            console.error(
-              '❌ WS CALLBACK ERROR:',
-              error
-            );
-          }
-        });
+        wsEmitter.emit(
+          parsed.type,
+          parsed.data
+        );
 
       } catch (error) {
 
         console.error(
-          '❌ WS PARSE ERROR:',
+          '❌ WS MESSAGE ERROR:',
           error
         );
       }
@@ -186,127 +233,111 @@ class WSClient {
         '🔌 WS DISCONNECTED'
       );
 
-      this.stopHeartbeat();
-
-      this.isConnecting = false;
+      this.connecting = false;
 
       this.ws = null;
 
-      if (this.manualClose) {
+      this.heartbeat.stop();
+
+      // ==========================================
+      // 🧠 STORE
+      // ==========================================
+
+      this.connectionStore
+        .setConnected(false);
+
+      wsEmitter.emit(
+        'disconnected'
+      );
+
+      if (
+        this.manualClose
+      ) {
         return;
       }
 
-      const timeout = Math.min(
-        1000 * 2 ** this.reconnectAttempts,
-        10000
-      );
+      if (
+        !this.reconnect.canReconnect()
+      ) {
 
-      this.reconnectAttempts++;
+        console.log(
+          '🚫 WS reconnect limit'
+        );
+
+        return;
+      }
+
+      this.connectionStore
+        .setReconnecting(true);
+
+      const delay =
+        this.reconnect.nextDelay();
+
+      this.connectionStore
+        .setReconnectAttempts(delay);
 
       console.log(
-        `🔄 WS RECONNECT IN ${timeout}ms`
+        `🔄 WS RECONNECT IN ${delay}ms`
       );
 
       setTimeout(() => {
+
         this.connect();
-      }, timeout);
+
+      }, delay);
     };
-  }
-
-  // ==========================================
-  // ❤️ HEARTBEAT
-  // ==========================================
-
-  private startHeartbeat() {
-
-    this.stopHeartbeat();
-
-    this.heartbeatInterval =
-      window.setInterval(() => {
-
-        if (
-          this.ws?.readyState ===
-          WebSocket.OPEN
-        ) {
-
-          this.ws.send(
-            JSON.stringify({
-              type: 'ping',
-              timestamp: Date.now()
-            })
-          );
-        }
-
-      }, 30000);
-  }
-
-  private stopHeartbeat() {
-
-    if (this.heartbeatInterval) {
-
-      clearInterval(
-        this.heartbeatInterval
-      );
-
-      this.heartbeatInterval =
-        null;
-    }
   }
 
   // ==========================================
   // 📡 SUBSCRIBE
   // ==========================================
 
-  subscribe(
-    event: string,
-    callback: WSCallback
+  subscribe<
+    K extends keyof WSEventsMap
+  >(
+    event: K,
+    callback: (
+      payload: WSEventsMap[K]
+    ) => void
   ) {
 
     this.connect();
 
-    if (
-      !this.listeners.has(event)
-    ) {
+    return wsEmitter.on(
+      event,
+      callback
+    );
+  }
 
-      this.listeners.set(
-        event,
-        new Set()
-      );
+  // ==========================================
+  // 📤 SEND
+  // ==========================================
+
+  send<
+    K extends keyof WSEventsMap
+  >(
+    type: K,
+    data?: WSEventsMap[K]
+  ) {
+
+    if (
+      this.ws?.readyState !==
+      WebSocket.OPEN
+    ) {
+      return;
     }
 
-    this.listeners
-      .get(event)
-      ?.add(callback);
+    this.ws.send(
+      JSON.stringify({
 
-    console.log(
-      `📡 WS SUBSCRIBED: ${event}`
+        type,
+
+        data,
+
+        timestamp:
+          Date.now()
+      })
     );
-
-    // ==========================================
-    // 🔥 UNSUBSCRIBE
-    // ==========================================
-
-    return () => {
-
-      this.listeners
-        .get(event)
-        ?.delete(callback);
-
-      console.log(
-        `❌ WS UNSUBSCRIBED: ${event}`
-      );
-
-      // 🧹 REMOVE EMPTY SET
-
-      if (
-        this.listeners
-          .get(event)
-          ?.size === 0
-      ) {
-
-        this.listeners.delete(event);
-      }
-    };
   }
 
   // ==========================================
@@ -315,23 +346,21 @@ class WSClient {
 
   disconnect() {
 
-    console.log(
-      '🛑 WS MANUAL DISCONNECT'
-    );
-
     this.manualClose = true;
 
-    this.stopHeartbeat();
+    this.heartbeat.stop();
 
     this.ws?.close();
 
     this.ws = null;
+
+    wsEmitter.clear();
+
+    console.log(
+      '🛑 WS MANUAL DISCONNECT'
+    );
   }
 }
-
-// ==========================================
-// 🚀 SINGLETON
-// ==========================================
 
 export const wsClient =
   new WSClient();

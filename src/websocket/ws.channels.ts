@@ -1,33 +1,24 @@
 import {
   wsClient
-} from '../websocket/ws.client';
+} from './ws.client';
 
 import {
   WS_EVENTS
-} from '../websocket/ws.events';
+} from './ws.events';
 
-import type {
-  FootballResponse
-} from '../types/football.types';
+// ==========================================
+// 📡 CHANNELS
+// ==========================================
 
-class FootballSocket {
-
-  // ==========================================
-  // 🚀 CONNECT
-  // ==========================================
-
-  connect() {
-
-    wsClient.connect();
-  }
+class WSChannels {
 
   // ==========================================
-  // 📡 FOOTBALL UPDATE
+  // ⚽ FOOTBALL
   // ==========================================
 
-  onUpdate(
+  football(
     callback: (
-      data: FootballResponse
+      payload: any
     ) => void
   ) {
 
@@ -38,10 +29,26 @@ class FootballSocket {
   }
 
   // ==========================================
-  // 🔌 CONNECTION EVENTS
+  // 🧠 ORCHESTRATOR
   // ==========================================
 
-  onConnected(
+  orchestrator(
+    callback: (
+      payload: any
+    ) => void
+  ) {
+
+    return wsClient.subscribe(
+      WS_EVENTS.ORCHESTRATOR,
+      callback
+    );
+  }
+
+  // ==========================================
+  // 🔌 CONNECTED
+  // ==========================================
+
+  connected(
     callback: () => void
   ) {
 
@@ -51,7 +58,11 @@ class FootballSocket {
     );
   }
 
-  onDisconnected(
+  // ==========================================
+  // ❌ DISCONNECTED
+  // ==========================================
+
+  disconnected(
     callback: () => void
   ) {
 
@@ -62,5 +73,5 @@ class FootballSocket {
   }
 }
 
-export const footballSocket =
-  new FootballSocket();
+export const wsChannels =
+  new WSChannels();

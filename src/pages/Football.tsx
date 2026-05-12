@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import MainLayout from '../components/layout/MainLayout';
 import StatCard from '../components/cards/StatCard';
@@ -12,11 +12,32 @@ from '../components/charts/FootballPredictionChart';
 import FootballLiveChart
 from '../components/charts/FootballLiveChart';
 
+import FootballMatchCard
+from '../components/football/FootballMatchCard';
+
 import { getFootballData } from '../services/football.service';
 
 import {
   footballSocket
 } from '../services/football.socket';
+
+import {
+
+  useFootballData,
+
+  useFootballConnected,
+
+  useFootballLastUpdate,
+
+  useFootballPredictions,
+
+  useBestPrediction,
+
+  useTopTeams,
+
+  useFootballMatches
+
+} from '../store/football.selectors';
 
 import {
   useFootballStore
@@ -42,13 +63,36 @@ export default function Football() {
   // 🧠 GLOBAL STORE
   // ==========================================
 
-  const {
-    data,
-    connected,
-    lastUpdate,
-    setFootballData,
-    setConnected
-  } = useFootballStore();
+  const data =
+    useFootballData();
+
+  const connected =
+    useFootballConnected();
+
+  const lastUpdate =
+    useFootballLastUpdate();
+
+  const validPredictions =
+    useFootballPredictions();
+
+  const bestPrediction =
+    useBestPrediction();
+
+  const topTeams =
+    useTopTeams();
+
+  const matches =
+    useFootballMatches();
+
+  const setFootballData =
+    useFootballStore(
+      (state) => state.setFootballData
+    );
+
+  const setConnected =
+    useFootballStore(
+      (state) => state.setConnected
+    );
 
   // ==========================================
   // 📡 LOAD INITIAL
@@ -110,7 +154,43 @@ export default function Football() {
 
     footballSocket.connect();
 
-    const unsubscribe =
+    // ==========================================
+    // 🟢 CONNECTED
+    // ==========================================
+
+    const unsubscribeConnected =
+      footballSocket.onConnected(
+        () => {
+
+          console.log(
+            '🟢 FOOTBALL WS CONNECTED'
+          );
+
+          setConnected(true);
+        }
+      );
+
+    // ==========================================
+    // 🔴 DISCONNECTED
+    // ==========================================
+
+    const unsubscribeDisconnected =
+      footballSocket.onDisconnected(
+        () => {
+
+          console.log(
+            '🔴 FOOTBALL WS DISCONNECTED'
+          );
+
+          setConnected(false);
+        }
+      );
+
+    // ==========================================
+    // ⚽ REALTIME UPDATE
+    // ==========================================
+
+    const unsubscribeFootball =
       footballSocket.onUpdate(
         (payload) => {
 
@@ -119,33 +199,39 @@ export default function Football() {
             payload
           );
 
-          setConnected(true);
-
           setFootballData(payload);
 
           const confidence =
-            payload?.bestPrediction?.confidence || 0;
+            payload?.bestPrediction
+              ?.confidence || 0;
 
-          setLiveChartData(prev => {
+          setLiveChartData(
+            (prev) => {
 
-            const next = [
+              const next = [
+                ...prev,
+                {
+                  time:
+                    new Date()
+                      .toLocaleTimeString(),
 
-              ...prev,
+                  confidence
+                }
+              ];
 
-              {
-                time:
-                  new Date().toLocaleTimeString(),
-                confidence
-              }
-            ];
-
-            return next.slice(-12);
-
-          });
-        });
+              return next.slice(-12);
+            }
+          );
+        }
+      );
 
     return () => {
-      unsubscribe();
+
+      unsubscribeConnected();
+
+      unsubscribeDisconnected();
+
+      unsubscribeFootball();
     };
 
   }, []);
@@ -154,36 +240,8 @@ export default function Football() {
   // 🧠 SAFE DATA
   // ==========================================
 
-  const predictions =
-    data?.predictions || [];
-
-  const validPredictions =
-    predictions.filter(
-      (p) =>
-        p &&
-        p.confidence > 0 &&
-        p.fairOdd > 0
-    );
-
-  const bestPrediction =
-    validPredictions.length
-
-      ? [...validPredictions]
-          .sort(
-            (a, b) =>
-              b.confidence - a.confidence
-          )[0]
-
-      : null;
-
   const hottestTeam =
     data?.hottestTeam;
-
-  const topTeams = useMemo(
-    () =>
-      (data?.topTeams || []).slice(0, 10),
-    [data]
-  );
 
   // ==========================================
   // ⏳ LOADING
@@ -407,7 +465,7 @@ export default function Football() {
 
       {/* CHARTS */}
 
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10 min-w-0">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-10 w-full min-w-0">
 
         <FootballPerformanceChart
           data={
@@ -451,56 +509,29 @@ export default function Football() {
           ⚽ Matches
         </h2>
 
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-          {data?.matches
-            ?.slice(0, 15)
-            .map((match, i) => (
+          {matches
+            ?.slice(0, 12)
+            .map((match, i) => {
 
-              <div
-                key={i}
-                className="p-4 rounded-xl bg-white/5 border border-white/5"
-              >
+              const prediction =
+                validPredictions.find(
+                  p =>
+                    p.homeTeam === match.homeTeam &&
+                    p.awayTeam === match.awayTeam
+                );
 
-                <div className="flex justify-between items-center">
+              return (
 
-                  <div>
+                <FootballMatchCard
+                  key={i}
+                  match={match}
+                  prediction={prediction}
+                />
 
-                    <p className="font-semibold">
-
-                      {match.homeTeam}
-                      {' '}vs{' '}
-                      {match.awayTeam}
-
-                    </p>
-
-                    <p className="text-xs text-slate-500 mt-1">
-
-                      {match.league}
-
-                    </p>
-
-                  </div>
-
-                  <span
-                    className={`
-                      text-xs px-3 py-1 rounded-full
-                      ${
-                        match.status === 'LIVE'
-                          ? 'bg-green-500/20 text-green-400'
-                          : 'bg-slate-500/20 text-slate-300'
-                      }
-                    `}
-                  >
-
-                    {match.status}
-
-                  </span>
-
-                </div>
-
-              </div>
-            ))}
+              );
+            })}
 
         </div>
 

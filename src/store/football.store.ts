@@ -4,52 +4,200 @@ import type {
   FootballResponse
 } from '../types/football.types';
 
+// ==========================================
+// ⚽ STORE
+// ==========================================
+
 type FootballStore = {
 
-  data: FootballResponse | null;
+  // ==========================================
+  // DATA
+  // ==========================================
+
+  data:
+    FootballResponse | null;
+
+  loading: boolean;
+
+  refreshing: boolean;
 
   connected: boolean;
 
-  lastUpdate: string;
+  reconnecting: boolean;
+
+  error:
+    string | null;
+
+  lastUpdate:
+    string | null;
+
+  // ==========================================
+  // ACTIONS
+  // ==========================================
 
   setFootballData:
-    (data: FootballResponse) => void;
+    (
+      data: FootballResponse
+    ) => void;
+
+  setLoading:
+    (value: boolean) => void;
+
+  setRefreshing:
+    (value: boolean) => void;
 
   setConnected:
     (value: boolean) => void;
+
+  setReconnecting:
+    (value: boolean) => void;
+
+  setError:
+    (
+      error: string | null
+    ) => void;
+
+  clear:
+    () => void;
 };
 
+// ==========================================
+// 🚀 STORE
+// ==========================================
+
 export const useFootballStore =
-  create<FootballStore>((set) => ({
+  create<FootballStore>(
+    (set) => ({
 
-    data: null,
+      // ==========================================
+      // INITIAL STATE
+      // ==========================================
 
-    connected: false,
+      data: null,
 
-    lastUpdate: '',
+      loading: true,
 
-    // ==========================================
-    // ⚽ UPDATE DATA
-    // ==========================================
+      refreshing: false,
 
-    setFootballData: (data) =>
+      connected: false,
 
-      set({
+      reconnecting: false,
 
-        data,
+      error: null,
 
-        lastUpdate:
-          new Date()
-            .toLocaleTimeString()
-      }),
+      lastUpdate: null,
 
-    // ==========================================
-    // 🔌 CONNECTION
-    // ==========================================
+      // ==========================================
+      // ⚽ SET DATA
+      // ==========================================
 
-    setConnected: (value) =>
+      setFootballData: (
+        data
+      ) =>
 
-      set({
-        connected: value
-      }),
-  }));
+        set({
+
+          data,
+
+          error: null,
+
+          loading: false,
+
+          refreshing: false,
+
+          lastUpdate:
+            new Date()
+              .toLocaleTimeString()
+        }),
+
+      // ==========================================
+      // ⏳ LOADING
+      // ==========================================
+
+      setLoading: (
+        value
+      ) =>
+
+        set({
+          loading: value
+        }),
+
+      // ==========================================
+      // 🔄 REFRESHING
+      // ==========================================
+
+      setRefreshing: (
+        value
+      ) =>
+
+        set({
+          refreshing: value
+        }),
+
+      // ==========================================
+      // 🔌 CONNECTED
+      // ==========================================
+
+      setConnected: (
+        value
+      ) =>
+
+        set({
+
+          connected: value,
+
+          reconnecting:
+            !value
+        }),
+
+      // ==========================================
+      // 🔄 RECONNECTING
+      // ==========================================
+
+      setReconnecting: (
+        value
+      ) =>
+
+        set({
+          reconnecting: value
+        }),
+
+      // ==========================================
+      // ❌ ERROR
+      // ==========================================
+
+      setError: (
+        error
+      ) =>
+
+        set({
+
+          error,
+
+          loading: false
+        }),
+
+      // ==========================================
+      // 🧹 CLEAR
+      // ==========================================
+
+      clear: () =>
+
+        set({
+
+          data: null,
+
+          loading: false,
+
+          refreshing: false,
+
+          connected: false,
+
+          reconnecting: false,
+
+          error: null,
+
+          lastUpdate: null
+        }),
+    })
+  );

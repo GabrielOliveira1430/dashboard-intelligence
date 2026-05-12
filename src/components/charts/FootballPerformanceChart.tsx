@@ -1,19 +1,139 @@
 import {
+
   ResponsiveContainer,
+
   BarChart,
+
   Bar,
+
   XAxis,
+
   YAxis,
+
   Tooltip,
-  CartesianGrid
+
+  CartesianGrid,
+
+  Cell
+
 } from 'recharts';
 
+// ==========================================
+// 🧠 TYPES
+// ==========================================
+
 type Props = {
+
   data: {
+
     team: string;
+
     performance: number;
+
   }[];
 };
+
+// ==========================================
+// 🎨 COLORS
+// ==========================================
+
+function getBarColor(
+  performance: number
+) {
+
+  if (performance >= 80) {
+    return '#10b981';
+  }
+
+  if (performance >= 60) {
+    return '#06b6d4';
+  }
+
+  if (performance >= 40) {
+    return '#facc15';
+  }
+
+  return '#ef4444';
+}
+
+// ==========================================
+// 💬 TOOLTIP
+// ==========================================
+
+type TooltipProps = {
+
+  active?: boolean;
+
+  payload?: any[];
+};
+
+function CustomTooltip({
+  active,
+  payload
+}: TooltipProps) {
+
+  if (
+    !active ||
+    !payload?.length
+  ) {
+    return null;
+  }
+
+  const item =
+    payload[0]?.payload;
+
+  return (
+
+    <div className="
+      rounded-2xl
+      border
+      border-cyan-500/20
+      bg-[#020617]/95
+      backdrop-blur-xl
+      p-4
+      shadow-2xl
+    ">
+
+      <p className="
+        text-sm
+        text-slate-400
+        mb-2
+      ">
+        Team
+      </p>
+
+      <p className="
+        text-lg
+        font-black
+        text-white
+        mb-3
+      ">
+        {item.team}
+      </p>
+
+      <p className="
+        text-xs
+        text-slate-400
+        mb-1
+      ">
+        Performance
+      </p>
+
+      <p className="
+        text-2xl
+        font-black
+        text-cyan-400
+      ">
+        {item.performance}%
+      </p>
+
+    </div>
+  );
+}
+
+// ==========================================
+// 📈 CHART
+// ==========================================
 
 export default function FootballPerformanceChart({
   data
@@ -28,33 +148,95 @@ export default function FootballPerformanceChart({
 
     <div
       className="
-        w-full
-        min-w-0
+        relative
         overflow-hidden
         rounded-3xl
-        bg-white/5
-        border border-cyan-500/10
+        border
+        border-cyan-500/10
+        bg-white/[0.04]
+        backdrop-blur-xl
         p-6
       "
     >
 
-      <div className="flex items-center justify-between mb-6">
+      {/* BG GLOW */}
 
-        <h2 className="text-2xl font-black">
-          📈 Team Performance
-        </h2>
+      <div className="
+        absolute
+        top-0
+        right-0
+        w-40
+        h-40
+        bg-cyan-500/10
+        blur-3xl
+      " />
 
-        <span className="text-xs text-cyan-400">
-          REALTIME
-        </span>
+      {/* HEADER */}
+
+      <div className="
+        relative
+        z-10
+        flex
+        items-center
+        justify-between
+        gap-4
+        mb-6
+      ">
+
+        <div>
+
+          <h2 className="
+            text-2xl
+            font-black
+          ">
+            📈 Team Performance
+          </h2>
+
+          <p className="
+            text-sm
+            text-slate-400
+            mt-1
+          ">
+            Top realtime teams
+          </p>
+
+        </div>
+
+        <div className="
+          rounded-xl
+          border
+          border-cyan-500/20
+          bg-cyan-500/10
+          px-3
+          py-2
+        ">
+
+          <span className="
+            text-xs
+            font-black
+            tracking-wide
+            text-cyan-400
+          ">
+            REALTIME
+          </span>
+
+        </div>
 
       </div>
 
-      <div className="w-full h-[350px] min-w-0">
+      {/* CHART */}
+
+      <div className="
+        relative
+        z-10
+        h-[350px]
+        w-full
+        min-w-0
+      ">
 
         <ResponsiveContainer
           width="100%"
-          height="100%"
+          height={350}
         >
 
           <BarChart
@@ -67,10 +249,14 @@ export default function FootballPerformanceChart({
             }}
           >
 
+            {/* GRID */}
+
             <CartesianGrid
               strokeDasharray="3 3"
-              opacity={0.08}
+              opacity={0.06}
             />
+
+            {/* X */}
 
             <XAxis
               dataKey="team"
@@ -78,28 +264,57 @@ export default function FootballPerformanceChart({
                 fill: '#94a3b8',
                 fontSize: 11
               }}
+              tickMargin={10}
+              minTickGap={20}
             />
+
+            {/* Y */}
 
             <YAxis
-              tick={{
-                fill: '#94a3b8'
-              }}
               domain={[0, 100]}
+              tick={{
+                fill: '#94a3b8',
+                fontSize: 11
+              }}
+              tickMargin={10}
             />
 
+            {/* TOOLTIP */}
+
             <Tooltip
-              contentStyle={{
-                background: '#020617',
-                border: '1px solid #0f172a',
-                borderRadius: 16
-              }}
+              content={
+                <CustomTooltip />
+              }
             />
+
+            {/* BAR */}
 
             <Bar
               dataKey="performance"
-              radius={[8, 8, 0, 0]}
-              animationDuration={1200}
-            />
+              radius={[10, 10, 0, 0]}
+              animationDuration={900}
+            >
+
+              {
+                safeData.map(
+                  (
+                    item,
+                    index
+                  ) => (
+
+                    <Cell
+                      key={index}
+                      fill={
+                        getBarColor(
+                          item.performance
+                        )
+                      }
+                    />
+                  )
+                )
+              }
+
+            </Bar>
 
           </BarChart>
 
