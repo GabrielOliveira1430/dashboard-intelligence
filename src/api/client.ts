@@ -11,21 +11,38 @@ import {
   refreshToken
 } from '../auth/auth.service';
 
+import {
+  env
+} from '../config/env';
+
 // =====================================
-// API
+// 🔒 REFRESH CONTROL
+// =====================================
+
+let isRefreshing = false;
+
+let pendingRequests: Array<
+  (token: string) => void
+> = [];
+
+// =====================================
+// 🚀 API
 // =====================================
 
 export const api = axios.create({
 
-  baseURL:
-    'http://localhost:3000/api/v1',
+  baseURL: env.api.http,
 
-  // 🚀 AUMENTADO
-  timeout: 60000,
+  timeout: 30000,
+
+  headers: {
+    'Content-Type':
+      'application/json'
+  }
 });
 
 // =====================================
-// REQUEST INTERCEPTOR
+// 🚀 REQUEST INTERCEPTOR
 // =====================================
 
 api.interceptors.request.use(
@@ -40,9 +57,6 @@ api.interceptors.request.use(
       config.headers.Authorization =
         `Bearer ${token}`;
     }
-
-    config.headers['Content-Type'] =
-      'application/json';
 
     console.log(
       '🚀 REQUEST:',
@@ -64,7 +78,7 @@ api.interceptors.request.use(
 );
 
 // =====================================
-// RESPONSE INTERCEPTOR
+// ✅ RESPONSE INTERCEPTOR
 // =====================================
 
 api.interceptors.response.use(
@@ -85,15 +99,52 @@ api.interceptors.response.use(
       error.config;
 
     // =====================================
-    // TOKEN EXPIRED
+    // 🚫 SEM RESPONSE
+    // =====================================
+
+    if (!error.response) {
+
+      console.error(
+        '🌐 NETWORK ERROR'
+      );
+
+      return Promise.reject(error);
+    }
+
+    // =====================================
+    // 🔒 TOKEN EXPIRED
     // =====================================
 
     if (
-      error.response?.status === 401 &&
+      error.response.status === 401 &&
       !originalRequest?._retry
     ) {
 
       originalRequest._retry = true;
+
+      // =====================================
+      // 🔥 AGUARDAR REFRESH
+      // =====================================
+
+      if (isRefreshing) {
+
+        return new Promise((resolve) => {
+
+          pendingRequests.push(
+            (token: string) => {
+
+              originalRequest.headers.Authorization =
+                `Bearer ${token}`;
+
+              resolve(
+                api(originalRequest)
+              );
+            }
+          );
+        });
+      }
+
+      isRefreshing = true;
 
       try {
 
@@ -107,6 +158,10 @@ api.interceptors.response.use(
           );
         }
 
+        console.log(
+          '🔄 REFRESH TOKEN'
+        );
+
         const response =
           await refreshToken(refresh);
 
@@ -114,6 +169,19 @@ api.interceptors.response.use(
           response.accessToken,
           response.refreshToken
         );
+
+        // =====================================
+        // 🚀 LIBERA FILA
+        // =====================================
+
+        pendingRequests.forEach(
+          (callback) =>
+            callback(
+              response.accessToken
+            )
+        );
+
+        pendingRequests = [];
 
         originalRequest.headers.Authorization =
           `Bearer ${response.accessToken}`;
@@ -131,11 +199,19 @@ api.interceptors.response.use(
 
         window.location.href =
           '/login';
+
+        return Promise.reject(
+          refreshError
+        );
+
+      } finally {
+
+        isRefreshing = false;
       }
     }
 
     // =====================================
-    // TIMEOUT
+    // ⏳ TIMEOUT
     // =====================================
 
     if (
@@ -148,7 +224,7 @@ api.interceptors.response.use(
     }
 
     // =====================================
-    // SERVER
+    // 🔥 SERVER ERROR
     // =====================================
 
     if (

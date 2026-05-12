@@ -6,7 +6,6 @@ import type {
   FootballResponse
 } from '../types/football.types';
 
-
 // =====================================
 // ⚽ SERVICE
 // =====================================
@@ -25,12 +24,55 @@ Promise<FootballResponse> {
 
       response.data;
 
+    // =====================================
+    // 🧠 SAFE NORMALIZATION
+    // =====================================
+
+    const normalized: FootballResponse = {
+
+      success:
+        data?.success || false,
+
+      matches:
+        data?.matches || [],
+
+      totalMatches:
+        data?.totalMatches || 0,
+
+      analytics:
+        data?.analytics || [],
+
+      topTeams:
+        data?.topTeams || [],
+
+      hottestTeam:
+        data?.hottestTeam || null,
+
+      predictions:
+        data?.predictions || [],
+
+      bestPrediction:
+        data?.bestPrediction || null,
+
+      odds:
+        data?.odds || [],
+
+      totalPredictions:
+        data?.totalPredictions || 0,
+
+      totalOdds:
+        data?.totalOdds || 0,
+
+      updatedAt:
+        data?.updatedAt || ''
+    };
+
     console.log(
       '⚽ FOOTBALL:',
-      data
+      normalized
     );
 
-    return data;
+    return normalized;
 
   } catch (error: any) {
 
