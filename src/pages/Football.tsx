@@ -1,3 +1,5 @@
+// src/pages/Football.tsx
+
 import { useEffect, useState } from 'react';
 
 import MainLayout from '../components/layout/MainLayout';
@@ -15,11 +17,29 @@ from '../components/charts/FootballLiveChart';
 import FootballMatchCard
 from '../components/football/FootballMatchCard';
 
+import FootballAlertsFeed
+from '../components/football/FootballAlertsFeed';
+
+import FootballLiveTerminal
+from '../components/football/FootballLiveTerminal';
+
+import FootballTacticalMap
+from '../components/football/tactical/FootballTacticalMap';
+
+import FootballQuantumSimulator
+from '../components/football/FootballQuantumSimulator';
+
+import { toast } from 'sonner';
+
 import { getFootballData } from '../services/football.service';
 
 import {
   footballSocket
 } from '../services/football.socket';
+
+import {
+  alertSoundEngine
+} from '../services/alert.sound';
 
 import {
 
@@ -42,6 +62,26 @@ import {
 import {
   useFootballStore
 } from '../store/football.store';
+
+import {
+  useFootballAlertsStore
+} from '../store/footballAlerts.store';
+
+import {
+  useLiveActivityStore
+} from '../store/liveActivity.store';
+
+import {
+  useFootballRealtimeStore
+} from '../store/footballRealtime.store';
+
+import {
+  useFootballTacticalStore
+} from '../store/footballTactical.store';
+
+import {
+  useFootballQuantumStore
+} from '../store/footballQuantum.store';
 
 export default function Football() {
 
@@ -84,6 +124,16 @@ export default function Football() {
   const matches =
     useFootballMatches();
 
+  const tactical =
+    useFootballTacticalStore(
+      state => state.tactical
+    );
+
+  const quantum =
+    useFootballQuantumStore(
+      state => state.quantum
+    );
+
   const setFootballData =
     useFootballStore(
       (state) => state.setFootballData
@@ -92,6 +142,19 @@ export default function Football() {
   const setConnected =
     useFootballStore(
       (state) => state.setConnected
+    );
+
+  const realtimeStore =
+    useFootballRealtimeStore();
+
+  const addAlert =
+    useFootballAlertsStore(
+      (state) => state.addAlert
+    );
+
+  const addActivity =
+    useLiveActivityStore(
+      (state) => state.add
     );
 
   // ==========================================
@@ -124,6 +187,7 @@ export default function Football() {
         {
           time:
             new Date().toLocaleTimeString(),
+
           confidence:
             initialConfidence
         }
@@ -225,6 +289,118 @@ export default function Football() {
         }
       );
 
+    // ==========================================
+    // 🚀 SNAPSHOT
+    // ==========================================
+
+    const unsubSnapshot =
+      footballSocket.onSnapshot(
+        (data) => {
+
+          realtimeStore
+            .setSnapshot(data);
+
+          setFootballData(data);
+        }
+      );
+
+    // ==========================================
+    // 🚨 ALERT STORE
+    // ==========================================
+
+    const unsubAlert =
+      footballSocket.onAlert(
+        realtimeStore.addAlert
+      );
+
+    // ==========================================
+    // 🧠 MOMENTUM
+    // ==========================================
+
+    const unsubMomentum =
+      footballSocket.onMomentum(
+        realtimeStore.addNeural
+      );
+
+    // ==========================================
+    // ⚛️ QUANTUM
+    // ==========================================
+
+    const unsubQuantum =
+      footballSocket.onQuantum(
+        realtimeStore.addQuantum
+      );
+
+    // ==========================================
+    // 🕒 TIMELINE
+    // ==========================================
+
+    const unsubTimeline =
+      footballSocket.onTimeline(
+        realtimeStore.addTimeline
+      );
+
+    // ==========================================
+    // 🔥 LIVE EVENTS
+    // ==========================================
+
+    const unsubLive =
+      footballSocket.onLiveEvent(
+        realtimeStore.addEvent
+      );
+
+    // ==========================================
+    // 💻 TERMINAL
+    // ==========================================
+
+    const unsubTerminal =
+      footballSocket.onTerminal(
+        realtimeStore.addTerminalLog
+      );
+
+    // ==========================================
+    // 🚨 ALERTS REALTIME
+    // ==========================================
+
+    const unsubscribeAlerts =
+      footballSocket.onAlert(
+        (alert) => {
+
+          console.log(
+            '🚨 FOOTBALL ALERT:',
+            alert
+          );
+
+          addAlert(alert);
+
+          toast(
+            alert.title,
+            {
+              description:
+                alert.message
+            }
+          );
+
+          alertSoundEngine.play(
+            alert.type
+          );
+
+          addActivity({
+            id:
+              crypto.randomUUID(),
+
+            type:
+              alert.type,
+
+            message:
+              `${alert.title} → ${alert.message}`,
+
+            timestamp:
+              Date.now()
+          });
+        }
+      );
+
     return () => {
 
       unsubscribeConnected();
@@ -232,6 +408,22 @@ export default function Football() {
       unsubscribeDisconnected();
 
       unsubscribeFootball();
+
+      unsubscribeAlerts();
+
+      unsubSnapshot();
+
+      unsubAlert();
+
+      unsubMomentum();
+
+      unsubQuantum();
+
+      unsubTimeline();
+
+      unsubLive();
+
+      unsubTerminal();
     };
 
   }, []);
@@ -498,6 +690,83 @@ export default function Football() {
         <FootballLiveChart
           data={liveChartData}
         />
+
+      </div>
+
+      {/* TACTICAL MAPS */}
+
+      <div className="mb-10">
+
+        <h2 className="text-2xl font-black mb-6">
+          🧠 Tactical Intelligence
+        </h2>
+
+        <div className="
+          grid
+          grid-cols-1
+          xl:grid-cols-2
+          gap-6
+        ">
+
+          {tactical.map((item) => (
+
+            <FootballTacticalMap
+              key={item.match}
+              homeTeam={item.homeTeam}
+              awayTeam={item.awayTeam}
+              homeDanger={item.homeDanger}
+              awayDanger={item.awayDanger}
+              possessionHome={item.possessionHome}
+              possessionAway={item.possessionAway}
+            />
+
+          ))}
+
+        </div>
+
+      </div>
+
+      {/* QUANTUM SIMULATION */}
+
+      <div className="mb-10">
+
+        <h2 className="text-2xl font-black mb-6">
+          ⚛️ Quantum Simulation
+        </h2>
+
+        <div className="
+          grid
+          grid-cols-1
+          xl:grid-cols-2
+          gap-6
+        ">
+
+          {quantum.map((item) => (
+
+            <FootballQuantumSimulator
+              key={item.match}
+              simulation={item}
+            />
+
+          ))}
+
+        </div>
+
+      </div>
+
+      {/* ALERTS */}
+
+      <div className="mb-10">
+
+        <FootballAlertsFeed />
+
+      </div>
+
+      {/* LIVE TERMINAL */}
+
+      <div className="mb-10">
+
+        <FootballLiveTerminal />
 
       </div>
 

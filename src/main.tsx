@@ -1,3 +1,5 @@
+// src/main.tsx
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 
@@ -12,6 +14,20 @@ import {
   ProfileProvider
 } from './auth/ProfileContext';
 
+import {
+  Toaster
+} from 'sonner';
+
+import {
+  wsManager
+} from './realtime/ws.manager';
+
+// ==========================================
+// 🚀 GLOBAL REALTIME INIT
+// ==========================================
+
+wsManager.initialize();
+
 ReactDOM.createRoot(
   document.getElementById('root')!
 ).render(
@@ -25,6 +41,14 @@ ReactDOM.createRoot(
         <ProfileProvider>
 
           <App />
+
+          <Toaster
+            richColors
+            position="top-right"
+            expand
+            closeButton
+            theme="dark"
+          />
 
         </ProfileProvider>
 

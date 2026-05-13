@@ -1,3 +1,5 @@
+// src/components/layout/MainLayout.tsx
+
 import type {
   ReactNode
 } from 'react';
@@ -16,6 +18,14 @@ import {
   useProfile
 } from '../../auth/ProfileContext';
 
+import {
+  useFootballAlertsStore
+} from '../../store/footballAlerts.store';
+
+import {
+  useWSConnectionStore
+} from '../../store/ws.connection.store';
+
 type Props = {
   children: ReactNode;
 };
@@ -32,6 +42,16 @@ export default function MainLayout({
 
   const { user } =
     useProfile();
+
+  const alerts =
+    useFootballAlertsStore(
+      (state) => state.alerts
+    );
+
+  const wsConnected =
+    useWSConnectionStore(
+      (state) => state.connected
+    );
 
   function isActive(path: string) {
 
@@ -77,6 +97,12 @@ export default function MainLayout({
       path: '/football',
       label: 'Football AI',
       icon: '⚽'
+    },
+
+    {
+      path: '/command-center',
+      label: 'AI Command',
+      icon: '🧠'
     }
   ];
 
@@ -468,6 +494,72 @@ export default function MainLayout({
             leading-relaxed
           ">
             Predições esportivas em tempo real com análise inteligente.
+          </p>
+
+        </div>
+
+        {/* LIVE ALERT STATUS */}
+
+        <div className="
+          mt-5
+          rounded-3xl
+          border
+          border-red-500/20
+          bg-red-500/10
+          p-5
+        ">
+
+          <div className="
+            flex
+            items-center
+            justify-between
+            mb-3
+          ">
+
+            <div className="
+              flex
+              items-center
+              gap-3
+            ">
+
+              <div className={`
+                w-3
+                h-3
+                rounded-full
+                ${
+                  wsConnected
+                    ? 'bg-green-400 animate-pulse'
+                    : 'bg-red-400'
+                }
+              `} />
+
+              <p className="
+                text-sm
+                font-black
+                uppercase
+                tracking-wider
+              ">
+                LIVE ALERTS
+              </p>
+
+            </div>
+
+            <span className="
+              text-red-400
+              font-black
+              text-xl
+            ">
+              {alerts.length}
+            </span>
+
+          </div>
+
+          <p className="
+            text-sm
+            text-slate-300
+            leading-relaxed
+          ">
+            Sistema realtime monitorando oportunidades ao vivo.
           </p>
 
         </div>

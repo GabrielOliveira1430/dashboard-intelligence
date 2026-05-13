@@ -1,3 +1,5 @@
+// src/websocket/ws.types.events.ts
+
 import type {
   FootballResponse
 } from '../types/football.types';
@@ -9,11 +11,33 @@ import type {
 export type WSEventsMap = {
 
   // ==========================================
-  // ⚽ FOOTBALL
+  // ⚽ FOOTBALL MAIN
   // ==========================================
 
   football:
     FootballResponse;
+
+  // ==========================================
+  // ⚽ FOOTBALL REALTIME
+  // ==========================================
+
+  football_snapshot: any;
+
+  football_update: any;
+
+  football_alert: any;
+
+  football_momentum: any;
+
+  football_quantum: any;
+
+  football_neural: any;
+
+  football_timeline: any;
+
+  football_live_event: any;
+
+  football_terminal: any;
 
   // ==========================================
   // 🧠 ORCHESTRATOR
@@ -35,6 +59,10 @@ export type WSEventsMap = {
   connected: void;
 
   disconnected: void;
+
+  connect: void;
+
+  disconnect: void;
 
   // ==========================================
   // ❤️ HEARTBEAT

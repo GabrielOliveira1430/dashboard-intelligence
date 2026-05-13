@@ -1,3 +1,5 @@
+// src/App.tsx
+
 import {
   BrowserRouter,
   Routes,
@@ -13,6 +15,7 @@ import Strategies from './pages/Strategies';
 import Simulator from './pages/Simulator';
 import Football from './pages/Football';
 import Login from './pages/Login';
+import CommandCenter from './pages/CommandCenter';
 
 export default function App() {
 
@@ -87,6 +90,17 @@ export default function App() {
             element={
               <PrivateRoute>
                 <Football />
+              </PrivateRoute>
+            }
+          />
+
+          {/* COMMAND CENTER */}
+
+          <Route
+            path="/command-center"
+            element={
+              <PrivateRoute>
+                <CommandCenter />
               </PrivateRoute>
             }
           />

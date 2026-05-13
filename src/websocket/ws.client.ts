@@ -1,3 +1,5 @@
+// src/websocket/ws.client.ts
+
 import {
   env
 } from '../config/env';
@@ -136,8 +138,16 @@ class WSClient {
       this.connectionStore
         .setReconnectAttempts(0);
 
+      // ==========================================
+      // 📡 EVENTS
+      // ==========================================
+
       wsEmitter.emit(
-        'connected'
+        WS_EVENTS.CONNECTED
+      );
+
+      wsEmitter.emit(
+        WS_EVENTS.CONNECT
       );
 
       // ==========================================
@@ -186,7 +196,9 @@ class WSClient {
           return;
         }
 
+        // ==========================================
         // ❤️ PONG
+        // ==========================================
 
         if (
           parsed.type ===
@@ -194,6 +206,10 @@ class WSClient {
         ) {
           return;
         }
+
+        // ==========================================
+        // 📡 EMIT
+        // ==========================================
 
         wsEmitter.emit(
           parsed.type,
@@ -246,8 +262,16 @@ class WSClient {
       this.connectionStore
         .setConnected(false);
 
+      // ==========================================
+      // 📡 EVENTS
+      // ==========================================
+
       wsEmitter.emit(
-        'disconnected'
+        WS_EVENTS.DISCONNECTED
+      );
+
+      wsEmitter.emit(
+        WS_EVENTS.DISCONNECT
       );
 
       if (
