@@ -38,6 +38,19 @@ import {
 } from '../realtime/ws.constants';
 
 // ==========================================
+// 📡 GENERIC WS MESSAGE
+// ==========================================
+
+type WSIncomingMessage = {
+
+  type: keyof WSEventsMap;
+
+  data?: unknown;
+
+  timestamp?: number;
+};
+
+// ==========================================
 // 🚀 WS CLIENT
 // ==========================================
 
@@ -56,6 +69,10 @@ class WSClient {
   private reconnect =
     new WSReconnect();
 
+  // ==========================================
+  // 🧠 STORE
+  // ==========================================
+
   private connectionStore =
     useWSConnectionStore.getState();
 
@@ -65,11 +82,19 @@ class WSClient {
 
   connect() {
 
+    // ==========================================
+    // 🔒 ALREADY CONNECTING
+    // ==========================================
+
     if (
       this.connecting
     ) {
       return;
     }
+
+    // ==========================================
+    // 🔒 ALREADY CONNECTED
+    // ==========================================
 
     if (
       this.ws &&
@@ -84,6 +109,10 @@ class WSClient {
       return;
     }
 
+    // ==========================================
+    // 🔑 TOKEN
+    // ==========================================
+
     const token =
       getAccessToken();
 
@@ -96,9 +125,17 @@ class WSClient {
       return;
     }
 
+    // ==========================================
+    // ⚡ STATE
+    // ==========================================
+
     this.connecting = true;
 
     this.manualClose = false;
+
+    // ==========================================
+    // 🌐 URL
+    // ==========================================
 
     const url =
       `${env.api.ws}?token=${token}`;
@@ -107,6 +144,10 @@ class WSClient {
       '⚡ WS CONNECTING:',
       url
     );
+
+    // ==========================================
+    // 🔌 SOCKET
+    // ==========================================
 
     this.ws =
       new WebSocket(url);
@@ -159,7 +200,7 @@ class WSClient {
         () => {
 
           this.send(
-            'ping',
+            WS_EVENTS.PING,
             {
               timestamp:
                 Date.now()
@@ -185,10 +226,15 @@ class WSClient {
 
       try {
 
-        const parsed =
-          JSON.parse(
-            event.data
-          );
+        const parsed:
+          WSIncomingMessage =
+            JSON.parse(
+              event.data
+            );
+
+        // ==========================================
+        // 🛡️ SAFE VALIDATION
+        // ==========================================
 
         if (
           !isWSMessage(parsed)
@@ -204,16 +250,17 @@ class WSClient {
           parsed.type ===
           WS_EVENTS.PONG
         ) {
+
           return;
         }
 
         // ==========================================
-        // 📡 EMIT
+        // 📡 EMIT EVENT
         // ==========================================
 
         wsEmitter.emit(
           parsed.type,
-          parsed.data
+          parsed.data as never
         );
 
       } catch (error) {
@@ -249,6 +296,10 @@ class WSClient {
         '🔌 WS DISCONNECTED'
       );
 
+      // ==========================================
+      // 🧹 RESET
+      // ==========================================
+
       this.connecting = false;
 
       this.ws = null;
@@ -274,11 +325,20 @@ class WSClient {
         WS_EVENTS.DISCONNECT
       );
 
+      // ==========================================
+      // 🛑 MANUAL CLOSE
+      // ==========================================
+
       if (
         this.manualClose
       ) {
+
         return;
       }
+
+      // ==========================================
+      // 🚫 LIMIT
+      // ==========================================
 
       if (
         !this.reconnect.canReconnect()
@@ -290,6 +350,10 @@ class WSClient {
 
         return;
       }
+
+      // ==========================================
+      // 🔄 RECONNECT
+      // ==========================================
 
       this.connectionStore
         .setReconnecting(true);
@@ -304,11 +368,14 @@ class WSClient {
         `🔄 WS RECONNECT IN ${delay}ms`
       );
 
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        this.connect();
+          this.connect();
 
-      }, delay);
+        },
+        delay
+      );
     };
   }
 
@@ -344,23 +411,51 @@ class WSClient {
     data?: WSEventsMap[K]
   ) {
 
+    // ==========================================
+    // 🛑 SOCKET CLOSED
+    // ==========================================
+
     if (
-      this.ws?.readyState !==
-      WebSocket.OPEN
+      !this.ws ||
+      this.ws.readyState !==
+        WebSocket.OPEN
     ) {
+
       return;
     }
 
-    this.ws.send(
-      JSON.stringify({
+    try {
 
-        type,
+      this.ws.send(
+        JSON.stringify({
 
-        data,
+          type,
 
-        timestamp:
-          Date.now()
-      })
+          data,
+
+          timestamp:
+            Date.now()
+        })
+      );
+
+    } catch (error) {
+
+      console.error(
+        '❌ WS SEND ERROR:',
+        error
+      );
+    }
+  }
+
+  // ==========================================
+  // 📶 STATUS
+  // ==========================================
+
+  isConnected() {
+
+    return (
+      this.ws?.readyState ===
+      WebSocket.OPEN
     );
   }
 
@@ -378,6 +473,8 @@ class WSClient {
 
     this.ws = null;
 
+    this.connecting = false;
+
     wsEmitter.clear();
 
     console.log(
@@ -385,6 +482,10 @@ class WSClient {
     );
   }
 }
+
+// ==========================================
+// 🚀 EXPORT
+// ==========================================
 
 export const wsClient =
   new WSClient();

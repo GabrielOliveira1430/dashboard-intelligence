@@ -14,6 +14,10 @@ import {
   useFootballRealtimeStore
 } from '../../store/footballRealtime.store';
 
+// ==========================================
+// 🧠 NEURAL VISUALIZER (SAFE VERSION)
+// ==========================================
+
 export default function FootballNeuralVisualizer() {
 
   const timeline =
@@ -21,23 +25,32 @@ export default function FootballNeuralVisualizer() {
       s => s.timeline
     );
 
+  // ==========================================
+  // 🧠 SAFETY: evita crash quando timeline é undefined
+  // ==========================================
+
+  const safeTimeline =
+    Array.isArray(timeline)
+      ? timeline
+      : [];
+
   const data =
-    timeline.map(
-      (item: any, index) => ({
+    safeTimeline.map(
+      (item: any, index: number) => ({
 
         index,
 
         homePressure:
-          item.homePressure || 0,
+          Number(item?.homePressure ?? 0),
 
         awayPressure:
-          item.awayPressure || 0,
+          Number(item?.awayPressure ?? 0),
 
         momentum:
-          item.momentum || 0,
+          Number(item?.momentum ?? 0),
 
         goalProbability:
-          item.goalProbability || 0
+          Number(item?.goalProbability ?? 0)
       })
     );
 
@@ -111,198 +124,214 @@ export default function FootballNeuralVisualizer() {
 
       </div>
 
-      {/* PRESSURE FLOW */}
+      {/* EMPTY STATE SAFE */}
 
-      <div className="mb-10">
-
-        <h3 className="
-          text-xl
-          font-black
-          mb-4
+      {data.length === 0 ? (
+        <div className="
+          h-[300px]
+          flex
+          items-center
+          justify-center
+          text-slate-400
+          text-sm
+          border
+          border-white/5
+          rounded-2xl
         ">
-          ⚡ Pressure Flow
-        </h3>
-
-        <div className="h-[300px]">
-
-          <ResponsiveContainer>
-
-            <AreaChart data={data}>
-
-              <defs>
-
-                <linearGradient
-                  id="homePressure"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-
-                  <stop
-                    offset="5%"
-                    stopColor="#06b6d4"
-                    stopOpacity={0.5}
-                  />
-
-                  <stop
-                    offset="95%"
-                    stopColor="#06b6d4"
-                    stopOpacity={0}
-                  />
-
-                </linearGradient>
-
-                <linearGradient
-                  id="awayPressure"
-                  x1="0"
-                  y1="0"
-                  x2="0"
-                  y2="1"
-                >
-
-                  <stop
-                    offset="5%"
-                    stopColor="#ef4444"
-                    stopOpacity={0.5}
-                  />
-
-                  <stop
-                    offset="95%"
-                    stopColor="#ef4444"
-                    stopOpacity={0}
-                  />
-
-                </linearGradient>
-
-              </defs>
-
-              <CartesianGrid
-                strokeDasharray="3 3"
-                opacity={0.08}
-              />
-
-              <XAxis dataKey="index" />
-
-              <YAxis />
-
-              <Tooltip />
-
-              <Area
-                type="monotone"
-                dataKey="homePressure"
-                stroke="#06b6d4"
-                fill="url(#homePressure)"
-                strokeWidth={3}
-              />
-
-              <Area
-                type="monotone"
-                dataKey="awayPressure"
-                stroke="#ef4444"
-                fill="url(#awayPressure)"
-                strokeWidth={3}
-              />
-
-            </AreaChart>
-
-          </ResponsiveContainer>
-
+          🧠 Waiting realtime neural data...
         </div>
+      ) : (
+        <>
 
-      </div>
+          {/* PRESSURE FLOW */}
 
-      {/* MOMENTUM */}
+          <div className="mb-10">
 
-      <div className="mb-10">
+            <h3 className="
+              text-xl
+              font-black
+              mb-4
+            ">
+              ⚡ Pressure Flow
+            </h3>
 
-        <h3 className="
-          text-xl
-          font-black
-          mb-4
-        ">
-          🌊 Momentum Waves
-        </h3>
+            <div className="h-[300px]">
 
-        <div className="h-[300px]">
+              <ResponsiveContainer>
 
-          <ResponsiveContainer>
+                <AreaChart data={data}>
 
-            <LineChart data={data}>
+                  <defs>
 
-              <CartesianGrid
-                strokeDasharray="3 3"
-                opacity={0.08}
-              />
+                    <linearGradient
+                      id="homePressure"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
 
-              <XAxis dataKey="index" />
+                      <stop
+                        offset="5%"
+                        stopColor="#06b6d4"
+                        stopOpacity={0.5}
+                      />
 
-              <YAxis />
+                      <stop
+                        offset="95%"
+                        stopColor="#06b6d4"
+                        stopOpacity={0}
+                      />
 
-              <Tooltip />
+                    </linearGradient>
 
-              <Line
-                type="monotone"
-                dataKey="momentum"
-                stroke="#8b5cf6"
-                strokeWidth={4}
-                dot={false}
-                isAnimationActive
-              />
+                    <linearGradient
+                      id="awayPressure"
+                      x1="0"
+                      y1="0"
+                      x2="0"
+                      y2="1"
+                    >
 
-            </LineChart>
+                      <stop
+                        offset="5%"
+                        stopColor="#ef4444"
+                        stopOpacity={0.5}
+                      />
 
-          </ResponsiveContainer>
+                      <stop
+                        offset="95%"
+                        stopColor="#ef4444"
+                        stopOpacity={0}
+                      />
 
-        </div>
+                    </linearGradient>
 
-      </div>
+                  </defs>
 
-      {/* GOAL PROBABILITY */}
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    opacity={0.08}
+                  />
 
-      <div>
+                  <XAxis dataKey="index" />
+                  <YAxis />
+                  <Tooltip />
 
-        <h3 className="
-          text-xl
-          font-black
-          mb-4
-        ">
-          🎯 Goal Probability Pulse
-        </h3>
+                  <Area
+                    type="monotone"
+                    dataKey="homePressure"
+                    stroke="#06b6d4"
+                    fill="url(#homePressure)"
+                    strokeWidth={3}
+                  />
 
-        <div className="h-[300px]">
+                  <Area
+                    type="monotone"
+                    dataKey="awayPressure"
+                    stroke="#ef4444"
+                    fill="url(#awayPressure)"
+                    strokeWidth={3}
+                  />
 
-          <ResponsiveContainer>
+                </AreaChart>
 
-            <LineChart data={data}>
+              </ResponsiveContainer>
 
-              <CartesianGrid
-                strokeDasharray="3 3"
-                opacity={0.08}
-              />
+            </div>
 
-              <XAxis dataKey="index" />
+          </div>
 
-              <YAxis domain={[0, 100]} />
+          {/* MOMENTUM */}
 
-              <Tooltip />
+          <div className="mb-10">
 
-              <Line
-                type="monotone"
-                dataKey="goalProbability"
-                stroke="#22c55e"
-                strokeWidth={4}
-                dot={false}
-                isAnimationActive
-              />
+            <h3 className="
+              text-xl
+              font-black
+              mb-4
+            ">
+              🌊 Momentum Waves
+            </h3>
 
-            </LineChart>
+            <div className="h-[300px]">
 
-          </ResponsiveContainer>
+              <ResponsiveContainer>
 
-        </div>
+                <LineChart data={data}>
 
-      </div>
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    opacity={0.08}
+                  />
+
+                  <XAxis dataKey="index" />
+                  <YAxis />
+                  <Tooltip />
+
+                  <Line
+                    type="monotone"
+                    dataKey="momentum"
+                    stroke="#8b5cf6"
+                    strokeWidth={4}
+                    dot={false}
+                    isAnimationActive
+                  />
+
+                </LineChart>
+
+              </ResponsiveContainer>
+
+            </div>
+
+          </div>
+
+          {/* GOAL PROBABILITY */}
+
+          <div>
+
+            <h3 className="
+              text-xl
+              font-black
+              mb-4
+            ">
+              🎯 Goal Probability Pulse
+            </h3>
+
+            <div className="h-[300px]">
+
+              <ResponsiveContainer>
+
+                <LineChart data={data}>
+
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    opacity={0.08}
+                  />
+
+                  <XAxis dataKey="index" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip />
+
+                  <Line
+                    type="monotone"
+                    dataKey="goalProbability"
+                    stroke="#22c55e"
+                    strokeWidth={4}
+                    dot={false}
+                    isAnimationActive
+                  />
+
+                </LineChart>
+
+              </ResponsiveContainer>
+
+            </div>
+
+          </div>
+
+        </>
+      )}
 
     </div>
   );

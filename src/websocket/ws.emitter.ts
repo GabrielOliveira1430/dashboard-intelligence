@@ -1,3 +1,5 @@
+// src/websocket/ws.emitter.ts
+
 import type {
   WSEventsMap
 } from './ws.types.events';
@@ -20,7 +22,7 @@ class WSEmitter {
 
   private listeners = new Map<
     keyof WSEventsMap,
-    Set<(payload: any) => void>
+    Set<(payload: unknown) => void>
   >();
 
   // ==========================================
@@ -46,7 +48,11 @@ class WSEmitter {
 
     this.listeners
       .get(event)
-      ?.add(callback);
+      ?.add(
+        callback as (
+          payload: unknown
+        ) => void
+      );
 
     // ==========================================
     // 🔥 UNSUBSCRIBE
@@ -54,14 +60,21 @@ class WSEmitter {
 
     return () => {
 
-      this.listeners
-        .get(event)
-        ?.delete(callback);
+      const callbacks =
+        this.listeners.get(event);
+
+      if (!callbacks) {
+        return;
+      }
+
+      callbacks.delete(
+        callback as (
+          payload: unknown
+        ) => void
+      );
 
       if (
-        this.listeners
-          .get(event)
-          ?.size === 0
+        callbacks.size === 0
       ) {
 
         this.listeners.delete(
@@ -99,7 +112,7 @@ class WSEmitter {
         } catch (error) {
 
           console.error(
-            '❌ WS EMITTER ERROR:',
+            `❌ WS EMITTER ERROR [${String(event)}]:`,
             error
           );
         }
@@ -108,7 +121,39 @@ class WSEmitter {
   }
 
   // ==========================================
-  // 🧹 CLEAR
+  // 🧹 CLEAR EVENT
+  // ==========================================
+
+  clearEvent<
+    K extends keyof WSEventsMap
+  >(
+    event: K
+  ) {
+
+    this.listeners.delete(
+      event
+    );
+  }
+
+  // ==========================================
+  // 📊 COUNT
+  // ==========================================
+
+  listenerCount<
+    K extends keyof WSEventsMap
+  >(
+    event: K
+  ) {
+
+    return (
+      this.listeners
+        .get(event)
+        ?.size || 0
+    );
+  }
+
+  // ==========================================
+  // 🧹 CLEAR ALL
   // ==========================================
 
   clear() {

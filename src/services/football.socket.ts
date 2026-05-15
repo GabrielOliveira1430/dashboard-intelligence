@@ -92,7 +92,7 @@ class FootballSocket {
 
       WS_EVENTS.FOOTBALL_SNAPSHOT,
 
-      (data: any) => {
+      (data: Record<string, any>) => {
 
         // ======================================
         // 🛰️ TACTICAL STORE

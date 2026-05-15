@@ -8,42 +8,42 @@ import { create } from 'zustand';
 
 type FootballRealtimeStore = {
 
-  snapshot: any;
+  snapshot: Record<string, any> | null;
 
-  alerts: any[];
+  alerts: Record<string, any>[];
 
-  timeline: any[];
+  timeline: Record<string, any>[];
 
-  liveEvents: any[];
+  liveEvents: Record<string, any>[];
 
   terminalLogs: string[];
 
-  neuralActivity: any[];
+  neuralActivity: Record<string, any>[];
 
-  quantumPredictions: any[];
+  quantumPredictions: Record<string, any>[];
 
   connected: boolean;
 
   setSnapshot:
-    (data: any) => void;
+    (data: Record<string, any>) => void;
 
   addAlert:
-    (data: any) => void;
+    (data: Record<string, any>) => void;
 
   addTimeline:
-    (data: any) => void;
+    (data: Record<string, any>) => void;
 
   addEvent:
-    (data: any) => void;
+    (data: Record<string, any>) => void;
 
   addTerminalLog:
     (data: string) => void;
 
   addNeural:
-    (data: any) => void;
+    (data: Record<string, any>) => void;
 
   addQuantum:
-    (data: any) => void;
+    (data: Record<string, any>) => void;
 
   setConnected:
     (value: boolean) => void;

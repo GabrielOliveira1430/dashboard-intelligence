@@ -1,6 +1,7 @@
 // src/store/football.selectors.ts
 
-import { useFootballStore } from './football.store';
+import { useFootballStore }
+from './football.store';
 
 // ==========================================
 // ⚽ FALLBACKS
@@ -67,6 +68,18 @@ export const useFootballLastUpdate =
     );
 
 // ==========================================
+// ⚽ MATCHES
+// ==========================================
+
+export const useFootballMatches =
+  () =>
+    useFootballStore(
+      (state) =>
+        state.data?.matches ||
+        EMPTY_ARRAY
+    );
+
+// ==========================================
 // ⚽ PREDICTIONS
 // ==========================================
 
@@ -103,13 +116,61 @@ export const useTopTeams =
     );
 
 // ==========================================
-// ⚽ MATCHES
+// ⚛️ QUANTUM
 // ==========================================
 
-export const useFootballMatches =
+export const useQuantum =
   () =>
     useFootballStore(
       (state) =>
-        state.data?.matches ||
+        state.data?.quantum ||
         EMPTY_ARRAY
+    );
+
+// ==========================================
+// ⚽ TACTICAL
+// ==========================================
+
+export const useTactical =
+  () =>
+    useFootballStore(
+      (state) =>
+        state.data?.tactical ||
+        EMPTY_ARRAY
+    );
+
+// ==========================================
+// 🚨 LIVE EVENTS
+// ==========================================
+
+export const useLiveEvents =
+  () =>
+    useFootballStore(
+      (state) =>
+        state.data?.liveEvents ||
+        EMPTY_ARRAY
+    );
+
+// ==========================================
+// 💰 VALUE BETS
+// ==========================================
+
+export const useValueBets =
+  () =>
+    useFootballStore(
+      (state) =>
+        state.data?.valueBets ||
+        EMPTY_ARRAY
+    );
+
+// ==========================================
+// 🧠 AI CORE
+// ==========================================
+
+export const useAICore =
+  () =>
+    useFootballStore(
+      (state) =>
+        state.data?.aiCore ||
+        null
     );

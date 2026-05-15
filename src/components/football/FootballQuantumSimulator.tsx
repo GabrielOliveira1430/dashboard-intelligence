@@ -1,11 +1,42 @@
+// src/components/football/FootballQuantumSimulator.tsx
+
+import type {
+  QuantumSimulation
+} from '../../types/football.quantum.types';
+
 type Props = {
 
-  simulation: any;
+  simulation?:
+    QuantumSimulation | null;
 };
 
 export default function FootballQuantumSimulator({
   simulation
 }: Props) {
+
+  // ==========================================
+  // 🛡️ SAFE
+  // ==========================================
+
+  if (!simulation) {
+
+    return (
+
+      <div className="
+        rounded-3xl
+        border
+        border-violet-500/20
+        bg-violet-500/5
+        p-6
+      ">
+
+        <p className="text-slate-400">
+          No quantum simulation
+        </p>
+
+      </div>
+    );
+  }
 
   return (
 
@@ -77,7 +108,7 @@ export default function FootballQuantumSimulator({
               font-black
               text-violet-400
             ">
-              {simulation.simulations}
+              {simulation.simulations ?? 0}
             </h2>
 
           </div>
@@ -106,7 +137,7 @@ export default function FootballQuantumSimulator({
               font-black
               text-cyan-400
             ">
-              {simulation.winProbabilityHome}%
+              {simulation.winProbabilityHome ?? 0}%
             </h2>
 
           </div>
@@ -125,7 +156,7 @@ export default function FootballQuantumSimulator({
               text-3xl
               font-black
             ">
-              {simulation.drawProbability}%
+              {simulation.drawProbability ?? 0}%
             </h2>
 
           </div>
@@ -145,7 +176,7 @@ export default function FootballQuantumSimulator({
               font-black
               text-red-400
             ">
-              {simulation.winProbabilityAway}%
+              {simulation.winProbabilityAway ?? 0}%
             </h2>
 
           </div>
@@ -172,9 +203,9 @@ export default function FootballQuantumSimulator({
               text-2xl
               font-black
             ">
-              {simulation.expectedGoalsHome}
+              {simulation.expectedGoalsHome ?? 0}
               {' '}x{' '}
-              {simulation.expectedGoalsAway}
+              {simulation.expectedGoalsAway ?? 0}
             </h2>
 
           </div>
@@ -194,7 +225,7 @@ export default function FootballQuantumSimulator({
               font-black
               text-violet-400
             ">
-              {simulation.chaosLevel}%
+              {simulation.chaosLevel ?? 0}%
             </h2>
 
           </div>

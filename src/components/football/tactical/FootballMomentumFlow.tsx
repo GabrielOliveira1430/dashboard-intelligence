@@ -16,33 +16,37 @@ export default function FootballMomentumFlow() {
 
   const data =
     useFootballRealtimeStore(
-      (state: any) =>
-        state.data
+      (state: any) => state.data
     );
 
   const predictions =
-    data?.predictions || [];
+    data?.predictions ?? [];
+
+  // ==========================================
+  // 🛡 SAFE CHART DATA
+  // ==========================================
 
   const chartData =
-    predictions
-      .slice(0, 10)
-      .map(
-        (
-          item: any,
-          index: number
-        ) => ({
+    Array.isArray(predictions)
+      ? predictions.slice(0, 10).map(
+          (item: any, index: number) => ({
+            time: String(index + 1),
 
-          time:
-            `${index + 1}`,
+            confidence: Number(item?.confidence ?? 0),
 
-          confidence:
-            item.confidence || 0,
+            pressure: Number(
+              item?.pressure?.goalProbability ?? 0
+            )
+          })
+        )
+      : [];
 
-          pressure:
-            item.pressure
-              ?.goalProbability || 0
-        })
-      );
+  // ==========================================
+  // ⚠️ EMPTY STATE PROTECTION
+  // ==========================================
+
+  const hasData =
+    chartData.length > 0;
 
   return (
 
@@ -55,156 +59,123 @@ export default function FootballMomentumFlow() {
       bg-white/[0.04]
       backdrop-blur-xl
       p-6
+      min-h-[320px]
     ">
 
-      <div className="
-        absolute
-        inset-0
-        pointer-events-none
-      ">
-
-        <div className="
-          absolute
-          top-0
-          left-0
-          w-40
-          h-40
-          bg-cyan-500/10
-          blur-3xl
-        " />
-
+      {/* BG EFFECT */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-0 left-0 w-40 h-40 bg-cyan-500/10 blur-3xl" />
       </div>
 
-      <div className="
-        relative
-        z-10
-        flex
-        items-center
-        justify-between
-        mb-6
-      ">
+      {/* HEADER */}
+      <div className="relative z-10 flex items-center justify-between mb-6">
 
         <div>
-
-          <h2 className="
-            text-2xl
-            font-black
-          ">
+          <h2 className="text-2xl font-black">
             ⚡ Momentum Flow
           </h2>
 
-          <p className="
-            text-sm
-            text-slate-400
-            mt-1
-          ">
+          <p className="text-sm text-slate-400 mt-1">
             Neural momentum tracking
           </p>
-
         </div>
 
         <div className="
-          px-3
-          py-2
-          rounded-xl
-          border
-          border-cyan-500/20
+          px-3 py-2 rounded-xl
+          border border-cyan-500/20
           bg-cyan-500/10
           text-cyan-400
-          text-xs
-          font-black
+          text-xs font-black
         ">
           LIVE FLOW
         </div>
 
       </div>
 
-      <div className="
-        relative
-        z-10
-        h-[320px]
-      ">
+      {/* EMPTY STATE (IMPORTANT FIX) */}
+      {!hasData ? (
+        <div className="
+          relative z-10
+          h-[220px]
+          flex items-center justify-center
+          text-slate-500
+          text-sm
+        ">
+          Waiting realtime data...
+        </div>
+      ) : (
 
-        <ResponsiveContainer
-          width="100%"
-          height="100%"
-        >
+        <div className="relative z-10 h-[320px]">
 
-          <AreaChart
-            data={chartData}
-          >
+          <ResponsiveContainer width="100%" height="100%">
 
-            <defs>
+            <AreaChart data={chartData}>
 
-              <linearGradient
-                id="momentumGradient"
-                x1="0"
-                y1="0"
-                x2="0"
-                y2="1"
-              >
+              <defs>
+                <linearGradient
+                  id="momentumGradient"
+                  x1="0"
+                  y1="0"
+                  x2="0"
+                  y2="1"
+                >
+                  <stop
+                    offset="5%"
+                    stopColor="#06b6d4"
+                    stopOpacity={0.5}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="#06b6d4"
+                    stopOpacity={0}
+                  />
+                </linearGradient>
+              </defs>
 
-                <stop
-                  offset="5%"
-                  stopColor="#06b6d4"
-                  stopOpacity={0.5}
-                />
+              <CartesianGrid
+                strokeDasharray="3 3"
+                opacity={0.05}
+              />
 
-                <stop
-                  offset="95%"
-                  stopColor="#06b6d4"
-                  stopOpacity={0}
-                />
+              <XAxis
+                dataKey="time"
+                tick={{
+                  fill: '#94a3b8',
+                  fontSize: 11
+                }}
+              />
 
-              </linearGradient>
+              <YAxis
+                domain={[0, 100]}
+                tick={{
+                  fill: '#94a3b8',
+                  fontSize: 11
+                }}
+              />
 
-            </defs>
+              <Tooltip
+                contentStyle={{
+                  background: 'rgba(2,6,23,0.95)',
+                  border: '1px solid rgba(6,182,212,0.2)',
+                  borderRadius: '16px',
+                  color: '#fff'
+                }}
+              />
 
-            <CartesianGrid
-              strokeDasharray="3 3"
-              opacity={0.05}
-            />
+              <Area
+                type="monotone"
+                dataKey="confidence"
+                stroke="#06b6d4"
+                strokeWidth={3}
+                fill="url(#momentumGradient)"
+              />
 
-            <XAxis
-              dataKey="time"
-              tick={{
-                fill: '#94a3b8',
-                fontSize: 11
-              }}
-            />
+            </AreaChart>
 
-            <YAxis
-              domain={[0, 100]}
-              tick={{
-                fill: '#94a3b8',
-                fontSize: 11
-              }}
-            />
+          </ResponsiveContainer>
 
-            <Tooltip
-              contentStyle={{
-                background:
-                  'rgba(2,6,23,0.95)',
-                border:
-                  '1px solid rgba(6,182,212,0.2)',
-                borderRadius: '16px',
-                color: '#fff'
-              }}
-            />
-
-            <Area
-              type="monotone"
-              dataKey="confidence"
-              stroke="#06b6d4"
-              strokeWidth={3}
-              fill="url(#momentumGradient)"
-            />
-
-          </AreaChart>
-
-        </ResponsiveContainer>
-
-      </div>
+        </div>
+      )}
 
     </div>
   );

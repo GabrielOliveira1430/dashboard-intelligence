@@ -1,28 +1,57 @@
+// src/components/football/tactical/FootballTacticalMap.tsx
+
 type Props = {
 
-  homeTeam: string;
+  homeTeam?: string;
 
-  awayTeam: string;
+  awayTeam?: string;
 
-  homeDanger: number;
+  homeDanger?: number;
 
-  awayDanger: number;
+  awayDanger?: number;
 
-  possessionHome: number;
+  possessionHome?: number;
 
-  possessionAway: number;
+  possessionAway?: number;
 };
 
 export default function FootballTacticalMap({
 
-  homeTeam,
-  awayTeam,
-  homeDanger,
-  awayDanger,
-  possessionHome,
-  possessionAway
+  homeTeam = 'HOME',
+  awayTeam = 'AWAY',
+  homeDanger = 0,
+  awayDanger = 0,
+  possessionHome = 50,
+  possessionAway = 50
 
 }: Props) {
+
+  const safeHomeDanger =
+    Math.min(
+      100,
+      Math.max(
+        0,
+        homeDanger
+      )
+    );
+
+  const safeAwayDanger =
+    Math.min(
+      100,
+      Math.max(
+        0,
+        awayDanger
+      )
+    );
+
+  const safePossession =
+    Math.min(
+      95,
+      Math.max(
+        5,
+        possessionHome
+      )
+    );
 
   return (
 
@@ -36,8 +65,6 @@ export default function FootballTacticalMap({
       p-6
     ">
 
-      {/* FIELD */}
-
       <div className="
         relative
         h-[420px]
@@ -49,8 +76,6 @@ export default function FootballTacticalMap({
         to-emerald-700
         overflow-hidden
       ">
-
-        {/* FIELD LINES */}
 
         <div className="
           absolute
@@ -83,8 +108,6 @@ export default function FootballTacticalMap({
           -translate-y-1/2
         " />
 
-        {/* HOME PRESSURE */}
-
         <div
           className="
             absolute
@@ -99,11 +122,9 @@ export default function FootballTacticalMap({
           "
           style={{
             opacity:
-              homeDanger / 100
+              safeHomeDanger / 100
           }}
         />
-
-        {/* AWAY PRESSURE */}
 
         <div
           className="
@@ -119,11 +140,9 @@ export default function FootballTacticalMap({
           "
           style={{
             opacity:
-              awayDanger / 100
+              safeAwayDanger / 100
           }}
         />
-
-        {/* BALL */}
 
         <div
           className="
@@ -138,13 +157,12 @@ export default function FootballTacticalMap({
             duration-700
           "
           style={{
-            left: `${possessionHome}%`
+            left:
+              `${safePossession}%`
           }}
         />
 
       </div>
-
-      {/* INFO */}
 
       <div className="
         mt-5
@@ -170,7 +188,7 @@ export default function FootballTacticalMap({
             font-black
             text-cyan-400
           ">
-            {homeDanger}%
+            {safeHomeDanger}%
           </h2>
 
         </div>
@@ -192,7 +210,7 @@ export default function FootballTacticalMap({
             font-black
             text-red-400
           ">
-            {awayDanger}%
+            {safeAwayDanger}%
           </h2>
 
         </div>
